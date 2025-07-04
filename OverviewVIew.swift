@@ -589,6 +589,7 @@ struct CategorySection: View {
     @Binding var chaptersBookmarked: [String: Set<Int>]
     @Binding var lastRead: [String: (chapter: Int, verse: Int)]
     let onSelectChapter: (BibleBook, Int) -> Void
+    let onExpandBook: (BibleBook) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
