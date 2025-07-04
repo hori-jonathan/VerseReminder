@@ -302,25 +302,17 @@ struct OverviewView: View {
                     EmptyView()
                 }
 
-                // NavigationLink for expanded book navigation
-                NavigationLink(
-                    destination: selectedExpandedBook.map {
-                        ExpandedBookView(
-                            book: $0,
-                            searchManager: searchManager,
-                            chaptersRead: $chaptersRead,
-                            chaptersBookmarked: $chaptersBookmarked,
-                            lastRead: $lastRead
-                        ) { book, chapter in
-                            selectedChapter = (book, chapter, nil)
-                        }
-                    },
-                    isActive: Binding(
-                        get: { selectedExpandedBook != nil },
-                        set: { if !$0 { selectedExpandedBook = nil } }
-                    )
-                ) {
-                    EmptyView()
+                // Sheet for expanded book navigation
+                .sheet(item: $selectedExpandedBook) { book in
+                    ExpandedBookView(
+                        book: book,
+                        searchManager: searchManager,
+                        chaptersRead: $chaptersRead,
+                        chaptersBookmarked: $chaptersBookmarked,
+                        lastRead: $lastRead
+                    ) { b, chapter in
+                        selectedChapter = (b, chapter, nil)
+                    }
                 }
             }
             .navigationTitle("Books")
@@ -710,16 +702,12 @@ struct BookDropdownCell: View {
                                 .padding(.top, 2)
                             }
                             Button(action: onExpandBook) {
-                                HStack(spacing: 6) {
-                                    Image(systemName: "arrow.up.left.and.arrow.down.right")
-                                    Text("Expand Book")
-                                }
-                                .font(.footnote)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 5)
-                                .background(Color.purple)
-                                .cornerRadius(8)
+                                Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                    .font(.footnote)
+                                    .foregroundColor(.white)
+                                    .padding(8)
+                                    .background(Color.purple)
+                                    .cornerRadius(8)
                             }
                             Spacer()
                         }
