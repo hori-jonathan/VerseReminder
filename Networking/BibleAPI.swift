@@ -3,7 +3,7 @@ import Foundation
 private let apiKey = "e2e982866bf5cf105210c33fd6513ed4"
 private let baseUrl = "https://api.scripture.api.bible/v1"
 
-struct Verse {
+struct Verse: Equatable {
     let reference: String
     let content: String
     let contextURL: URL?
