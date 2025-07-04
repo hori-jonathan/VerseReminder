@@ -302,17 +302,25 @@ struct OverviewView: View {
                     EmptyView()
                 }
 
-                // Sheet for expanded book navigation
-                .sheet(item: $selectedExpandedBook) { book in
-                    ExpandedBookView(
-                        book: book,
-                        searchManager: searchManager,
-                        chaptersRead: $chaptersRead,
-                        chaptersBookmarked: $chaptersBookmarked,
-                        lastRead: $lastRead
-                    ) { b, chapter in
-                        selectedChapter = (b, chapter, nil)
-                    }
+                // NavigationLink for expanded book navigation
+                NavigationLink(
+                    destination: selectedExpandedBook.map { book in
+                        ExpandedBookView(
+                            book: book,
+                            searchManager: searchManager,
+                            chaptersRead: $chaptersRead,
+                            chaptersBookmarked: $chaptersBookmarked,
+                            lastRead: $lastRead
+                        ) { b, chapter in
+                            selectedChapter = (b, chapter, nil)
+                        }
+                    },
+                    isActive: Binding(
+                        get: { selectedExpandedBook != nil },
+                        set: { if !$0 { selectedExpandedBook = nil } }
+                    )
+                ) {
+                    EmptyView()
                 }
             }
             .navigationTitle("Books")
@@ -683,32 +691,33 @@ struct BookDropdownCell: View {
                                 Text("\(chaptersRead.count) of \(book.chapters) chapters read")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
-                                Button(action: onContinue) {
-                                    HStack(spacing: 6) {
-                                        Image(systemName: "arrow.right.circle.fill")
-                                        if let last = lastRead {
-                                            Text("Continue: Ch \(last.chapter)\(last.verse > 0 ? ":\(last.verse)" : "")")
-                                        } else {
-                                            Text("Start Book")
+                                HStack(spacing: 8) {
+                                    Button(action: onContinue) {
+                                        HStack(spacing: 6) {
+                                            Image(systemName: "arrow.right.circle.fill")
+                                            if let last = lastRead {
+                                                Text("Continue: Ch \(last.chapter)\(last.verse > 0 ? ":\(last.verse)" : "")")
+                                            } else {
+                                                Text("Start Book")
+                                            }
                                         }
+                                        .font(.footnote)
+                                        .foregroundColor(.white)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 5)
+                                        .background(Color.green)
+                                        .cornerRadius(8)
                                     }
-                                    .font(.footnote)
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 5)
-                                    .background(Color.green)
-                                    .cornerRadius(8)
+                                    Button(action: onExpandBook) {
+                                        Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                            .font(.subheadline.weight(.semibold))
+                                            .foregroundColor(.white)
+                                            .frame(width: 30, height: 30)
+                                            .background(Color.purple)
+                                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                                    }
                                 }
                                 .padding(.top, 2)
-                            }
-                            Spacer()
-                            Button(action: onExpandBook) {
-                                Image(systemName: "arrow.up.left.and.arrow.down.right")
-                                    .font(.subheadline.weight(.semibold))
-                                    .foregroundColor(.white)
-                                    .frame(width: 30, height: 30)
-                                    .background(Color.purple)
-                                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                             }
                         }
                         // Chapter selector: scrollable horizontal
