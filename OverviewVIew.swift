@@ -261,7 +261,6 @@ struct OverviewView: View {
                                     withAnimation(.easeInOut(duration: 0.5)) {
                                         proxy.scrollTo(id, anchor: .center)
                                     }
-                                    scrollTargetBookId = nil
                                 }
                             }
                         }
@@ -272,8 +271,17 @@ struct OverviewView: View {
                                     withAnimation(.easeInOut(duration: 0.5)) {
                                         proxy.scrollTo(id, anchor: .center)
                                     }
-                                    scrollTargetBookId = nil
                                 }
+                            }
+                        }
+                        .onChange(of: expandedBookId) { id in
+                            guard let id = id, id == scrollTargetBookId else { return }
+                            // Scroll again after the dropdown expansion animation completes
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                                withAnimation(.easeInOut(duration: 0.5)) {
+                                    proxy.scrollTo(id, anchor: .center)
+                                }
+                                scrollTargetBookId = nil
                             }
                         }
                     }
