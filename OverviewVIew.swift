@@ -255,33 +255,25 @@ struct OverviewView: View {
                         )
                         }
                         .listStyle(InsetGroupedListStyle())
-                        .onChange(of: scrollTargetBookId) { id in
-                            if let id = id {
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                    withAnimation(.easeInOut(duration: 0.5)) {
-                                        proxy.scrollTo(id, anchor: .center)
-                                    }
-                                }
+                        .task(id: scrollTargetBookId) {
+                            if let id = scrollTargetBookId {
+                                await attemptScroll(to: id, using: proxy)
                             }
                         }
                         .onChange(of: searchManager.showingSearchResults) { showing in
                             if !showing, let id = scrollTargetBookId {
                                 // When search results are dismissed, ensure we scroll to the target
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                    withAnimation(.easeInOut(duration: 0.5)) {
-                                        proxy.scrollTo(id, anchor: .center)
-                                    }
-                                }
+                                Task { await attemptScroll(to: id, using: proxy) }
                             }
                         }
                         .onChange(of: expandedBookId) { id in
                             guard let id = id, id == scrollTargetBookId else { return }
                             // Scroll again after the dropdown expansion animation completes
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                                withAnimation(.easeInOut(duration: 0.5)) {
-                                    proxy.scrollTo(id, anchor: .center)
+                                Task {
+                                    await attemptScroll(to: id, using: proxy)
+                                    scrollTargetBookId = nil
                                 }
-                                scrollTargetBookId = nil
                             }
                         }
                     }
@@ -328,6 +320,17 @@ struct OverviewView: View {
             // Navigate to chapter containing the verse
             selectedChapter = (result.book, result.chapter ?? 1, result.verse)
             searchManager.clearSearch()
+        }
+    }
+
+    @MainActor
+    private func attemptScroll(to id: String, using proxy: ScrollViewProxy) async {
+        let delays: [UInt64] = [100_000_000, 400_000_000, 800_000_000]
+        for delay in delays {
+            try? await Task.sleep(nanoseconds: delay)
+            withAnimation(.easeInOut(duration: 0.5)) {
+                proxy.scrollTo(id, anchor: .center)
+            }
         }
     }
 }
