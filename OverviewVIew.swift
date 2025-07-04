@@ -215,10 +215,9 @@ struct OverviewView: View {
     @State private var scrollTargetBookId: String? = nil
 
     var body: some View {
-        NavigationView {
-            VStack(spacing: 0) {
-                // Search Bar
-                SearchBar(searchManager: searchManager)
+        VStack(spacing: 0) {
+            // Search Bar
+            SearchBar(searchManager: searchManager)
                 
                 if searchManager.showingSearchResults {
                     // Search Results View
@@ -322,10 +321,9 @@ struct OverviewView: View {
                 ) {
                     EmptyView()
                 }
-            }
-            .navigationTitle("Books")
-            .navigationBarTitleDisplayMode(.large)
         }
+        .navigationTitle("Books")
+        .navigationBarTitleDisplayMode(.large)
     }
     
     private func handleSearchResultSelection(_ result: BibleSearchResult) {
