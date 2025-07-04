@@ -304,12 +304,12 @@ struct OverviewView: View {
     private func handleSearchResultSelection(_ result: BibleSearchResult) {
         switch result.type {
         case .book:
-            // Expand the book and scroll to it
-            withAnimation(.easeInOut(duration: 0.5)) {
-                expandedBookId = result.book.id
+            // Expand the selected book and ensure it comes into view
+            expandedBookId = result.book.id
+            searchManager.clearSearch()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 scrollTargetBookId = result.book.id
             }
-            searchManager.clearSearch()
             
         case .chapter:
             // Navigate to specific chapter

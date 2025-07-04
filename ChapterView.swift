@@ -81,6 +81,14 @@ struct ChapterView: View {
                                 }
                             }
                         }
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
+                    }
+                    .onChange(of: verses) { _ in
+                        highlightIfNeeded(using: proxy)
+                    }
+                    .onAppear {
+                        highlightIfNeeded(using: proxy)
                     }
                 }
             }
@@ -133,6 +141,24 @@ struct ChapterView: View {
         group.notify(queue: .main) {
             self.verses = loadedVerses
             self.isLoading = false
+        }
+    }
+
+    private func highlightIfNeeded(using proxy: ScrollViewProxy) {
+        guard highlightedVerseId == nil,
+              let target = highlightVerse,
+              let id = verses.first(where: { Int($0.verseNumber) == target })?.id else { return }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation(.easeInOut(duration: 0.5)) {
+                proxy.scrollTo(id, anchor: .center)
+            }
+            highlightedVerseId = id
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    highlightedVerseId = nil
+                }
+            }
         }
     }
 }
