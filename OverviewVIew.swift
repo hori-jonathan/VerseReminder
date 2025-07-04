@@ -258,7 +258,7 @@ struct OverviewView: View {
                         .onChange(of: scrollTargetBookId) { id in
                             if let id = id {
                                 withAnimation {
-                                    proxy.scrollTo(id, anchor: .top)
+                                    proxy.scrollTo(id, anchor: .center)
                                 }
                                 scrollTargetBookId = nil
                             }
