@@ -14,7 +14,7 @@ struct BibleSearchResult: Identifiable {
     let chapter: Int?
     let verse: Int?
     let title: String
-    let content: String?
+    var content: String?
     let matchedText: String?
     
     var hierarchyPath: String {
