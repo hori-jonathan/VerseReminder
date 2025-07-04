@@ -1,0 +1,110 @@
+import SwiftUI
+
+struct ExpandedBookView: View {
+    var book: BibleBook
+    @ObservedObject var searchManager: BibleSearchManager
+    @Binding var chaptersRead: [String: Set<Int>]
+    @Binding var chaptersBookmarked: [String: Set<Int>]
+    @Binding var lastRead: [String: (chapter: Int, verse: Int)]
+    let onSelectChapter: (BibleBook, Int) -> Void
+
+    @State private var selectedChapter: (book: BibleBook, chapter: Int, verse: Int?)? = nil
+    @State private var selectedBook: BibleBook? = nil
+
+    var body: some View {
+        VStack(spacing: 0) {
+            SearchBar(searchManager: searchManager)
+            if searchManager.showingSearchResults {
+                SearchResultsView(searchManager: searchManager) { result in
+                    handleSearchResult(result)
+                }
+            } else {
+                ScrollView {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 44))], spacing: 16) {
+                        ForEach(1...book.chapters, id: \.self) { chapter in
+                            Button(action: { onSelectChapter(book, chapter) }) {
+                                ZStack {
+                                    Text("\(chapter)")
+                                        .font(.footnote)
+                                        .frame(width: 36, height: 36)
+                                        .background(
+                                            (chaptersRead[book.id]?.contains(chapter) ?? false)
+                                                ? Color.blue.opacity(0.85)
+                                                : Color.red.opacity(0.13)
+                                        )
+                                        .foregroundColor((chaptersRead[book.id]?.contains(chapter) ?? false) ? .white : .primary)
+                                        .clipShape(Circle())
+                                        .overlay(
+                                            Circle()
+                                                .stroke(
+                                                    (chaptersRead[book.id]?.contains(chapter) ?? false) ? Color.blue : Color.red,
+                                                    lineWidth: 1.2
+                                                )
+                                        )
+                                    if (chaptersBookmarked[book.id]?.contains(chapter) ?? false) {
+                                        Image(systemName: "star.fill")
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 11, height: 11)
+                                            .foregroundColor(.yellow)
+                                            .offset(x: 9, y: -9)
+                                    }
+                                }
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                    }
+                    .padding()
+                }
+            }
+
+            NavigationLink(
+                destination: selectedChapter.map {
+                    ChapterView(
+                        chapterId: "\($0.book.id).\($0.chapter)",
+                        bibleId: defaultBibleId,
+                        highlightVerse: $0.verse
+                    )
+                },
+                isActive: Binding(
+                    get: { selectedChapter != nil },
+                    set: { if !$0 { selectedChapter = nil } }
+                )
+            ) { EmptyView() }
+
+            NavigationLink(
+                destination: selectedBook.map {
+                    ExpandedBookView(
+                        book: $0,
+                        searchManager: searchManager,
+                        chaptersRead: $chaptersRead,
+                        chaptersBookmarked: $chaptersBookmarked,
+                        lastRead: $lastRead,
+                        onSelectChapter: onSelectChapter
+                    )
+                },
+                isActive: Binding(
+                    get: { selectedBook != nil },
+                    set: { if !$0 { selectedBook = nil } }
+                )
+            ) { EmptyView() }
+        }
+        .navigationTitle(book.name)
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func handleSearchResult(_ result: BibleSearchResult) {
+        switch result.type {
+        case .book:
+            selectedBook = result.book
+            searchManager.clearSearch()
+        case .chapter:
+            selectedChapter = (result.book, result.chapter ?? 1, nil)
+            searchManager.clearSearch()
+        case .verse:
+            selectedChapter = (result.book, result.chapter ?? 1, result.verse)
+            searchManager.clearSearch()
+        }
+    }
+}
+

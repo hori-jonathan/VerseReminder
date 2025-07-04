@@ -211,6 +211,7 @@ struct OverviewView: View {
     @State private var chaptersBookmarked: [String: Set<Int>] = [:]
     @State private var lastRead: [String: (chapter: Int, verse: Int)] = [:]
     @State private var selectedChapter: (book: BibleBook, chapter: Int, verse: Int?)? = nil
+    @State private var selectedExpandedBook: BibleBook? = nil
     @State private var scrollTargetBookId: String? = nil
 
     var body: some View {
@@ -240,6 +241,9 @@ struct OverviewView: View {
                             lastRead: $lastRead,
                             onSelectChapter: { book, chapter in
                                 selectedChapter = (book, chapter, nil)
+                            },
+                            onExpandBook: { book in
+                                selectedExpandedBook = book
                             }
                         )
                         TestamentSection(
@@ -251,37 +255,32 @@ struct OverviewView: View {
                             lastRead: $lastRead,
                             onSelectChapter: { book, chapter in
                                 selectedChapter = (book, chapter, nil)
+                            },
+                            onExpandBook: { book in
+                                selectedExpandedBook = book
                             }
                         )
                         }
                         .listStyle(InsetGroupedListStyle())
-                        .onChange(of: scrollTargetBookId) { id in
-                            if let id = id {
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                    withAnimation(.easeInOut(duration: 0.5)) {
-                                        proxy.scrollTo(id, anchor: .center)
-                                    }
-                                }
+                        .task(id: scrollTargetBookId) {
+                            if let id = scrollTargetBookId {
+                                await attemptScroll(to: id, using: proxy)
                             }
                         }
                         .onChange(of: searchManager.showingSearchResults) { showing in
                             if !showing, let id = scrollTargetBookId {
                                 // When search results are dismissed, ensure we scroll to the target
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                    withAnimation(.easeInOut(duration: 0.5)) {
-                                        proxy.scrollTo(id, anchor: .center)
-                                    }
-                                }
+                                Task { await attemptScroll(to: id, using: proxy) }
                             }
                         }
                         .onChange(of: expandedBookId) { id in
                             guard let id = id, id == scrollTargetBookId else { return }
                             // Scroll again after the dropdown expansion animation completes
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                                withAnimation(.easeInOut(duration: 0.5)) {
-                                    proxy.scrollTo(id, anchor: .center)
+                                Task {
+                                    await attemptScroll(to: id, using: proxy)
+                                    scrollTargetBookId = nil
                                 }
-                                scrollTargetBookId = nil
                             }
                         }
                     }
@@ -303,6 +302,27 @@ struct OverviewView: View {
                 ) {
                     EmptyView()
                 }
+
+                // NavigationLink for expanded book navigation
+                NavigationLink(
+                    destination: selectedExpandedBook.map {
+                        ExpandedBookView(
+                            book: $0,
+                            searchManager: searchManager,
+                            chaptersRead: $chaptersRead,
+                            chaptersBookmarked: $chaptersBookmarked,
+                            lastRead: $lastRead
+                        ) { book, chapter in
+                            selectedChapter = (book, chapter, nil)
+                        }
+                    },
+                    isActive: Binding(
+                        get: { selectedExpandedBook != nil },
+                        set: { if !$0 { selectedExpandedBook = nil } }
+                    )
+                ) {
+                    EmptyView()
+                }
             }
             .navigationTitle("Books")
             .navigationBarTitleDisplayMode(.large)
@@ -312,12 +332,9 @@ struct OverviewView: View {
     private func handleSearchResultSelection(_ result: BibleSearchResult) {
         switch result.type {
         case .book:
-            // Expand the selected book and ensure it comes into view
-            expandedBookId = result.book.id
+            // Navigate to the expanded view for the selected book
+            selectedExpandedBook = result.book
             searchManager.clearSearch()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                scrollTargetBookId = result.book.id
-            }
             
         case .chapter:
             // Navigate to specific chapter
@@ -328,6 +345,17 @@ struct OverviewView: View {
             // Navigate to chapter containing the verse
             selectedChapter = (result.book, result.chapter ?? 1, result.verse)
             searchManager.clearSearch()
+        }
+    }
+
+    @MainActor
+    private func attemptScroll(to id: String, using proxy: ScrollViewProxy) async {
+        let delays: [UInt64] = [100_000_000, 400_000_000, 800_000_000]
+        for delay in delays {
+            try? await Task.sleep(nanoseconds: delay)
+            withAnimation(.easeInOut(duration: 0.5)) {
+                proxy.scrollTo(id, anchor: .center)
+            }
         }
     }
 }
@@ -535,6 +563,7 @@ struct TestamentSection: View {
     @Binding var chaptersBookmarked: [String: Set<Int>]
     @Binding var lastRead: [String: (chapter: Int, verse: Int)]
     let onSelectChapter: (BibleBook, Int) -> Void
+    let onExpandBook: (BibleBook) -> Void
 
     var body: some View {
         Section(header: Text(title).font(.title2).bold().padding(.top, 6)) {
@@ -545,7 +574,8 @@ struct TestamentSection: View {
                     chaptersRead: $chaptersRead,
                     chaptersBookmarked: $chaptersBookmarked,
                     lastRead: $lastRead,
-                    onSelectChapter: onSelectChapter
+                    onSelectChapter: onSelectChapter,
+                    onExpandBook: onExpandBook
                 )
             }
         }
@@ -583,6 +613,7 @@ struct CategorySection: View {
                         let next = lastRead[book.id]?.chapter ?? 1
                         onSelectChapter(book, next)
                     },
+                    onExpandBook: { onExpandBook(book) },
                     onSelectChapter: { chapter in
                         onSelectChapter(book, chapter)
                     }
@@ -604,6 +635,7 @@ struct BookDropdownCell: View {
     let chaptersBookmarked: Set<Int>
     let lastRead: (chapter: Int, verse: Int)?
     let onContinue: () -> Void
+    let onExpandBook: () -> Void
     let onSelectChapter: (Int) -> Void
 
     @State private var showContent: Bool = false
@@ -676,6 +708,18 @@ struct BookDropdownCell: View {
                                     .cornerRadius(8)
                                 }
                                 .padding(.top, 2)
+                            }
+                            Button(action: onExpandBook) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                    Text("Expand Book")
+                                }
+                                .font(.footnote)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 5)
+                                .background(Color.purple)
+                                .cornerRadius(8)
                             }
                             Spacer()
                         }
