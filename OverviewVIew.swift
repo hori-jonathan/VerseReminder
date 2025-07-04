@@ -57,9 +57,11 @@ class BibleSearchManager: ObservableObject {
         var results: [BibleSearchResult] = []
         let query = searchText.lowercased()
         
-        // Search books
+        // Search books with fuzzy matching
         for book in allBooks {
-            if book.name.lowercased().contains(query) {
+            let bookName = book.name.lowercased()
+            let similarity = bookName.similarityScore(to: query)
+            if bookName.contains(query) || similarity > 0.5 {
                 results.append(BibleSearchResult(
                     type: .book,
                     book: book,
@@ -67,35 +69,34 @@ class BibleSearchManager: ObservableObject {
                     verse: nil,
                     title: book.name,
                     content: "\(book.chapters) chapters",
-                    matchedText: nil
+                    matchedText: query
                 ))
             }
         }
         
-        // Search for chapter references (e.g., "John 3", "Genesis 1")
-        if let chapterRef = parseChapterReference(query) {
+        // Search for chapter/verse references like "John 3" or "John 3:16"
+        if let ref = parseReference(query) {
             results.append(BibleSearchResult(
                 type: .chapter,
-                book: chapterRef.book,
-                chapter: chapterRef.chapter,
+                book: ref.book,
+                chapter: ref.chapter,
                 verse: nil,
-                title: "Chapter \(chapterRef.chapter)",
+                title: "Chapter \(ref.chapter)",
                 content: nil,
                 matchedText: nil
             ))
-        }
-        
-        // Search for verse references (e.g., "John 3:16", "Romans 8:28")
-        if let verseRef = parseVerseReference(query) {
-            results.append(BibleSearchResult(
-                type: .verse,
-                book: verseRef.book,
-                chapter: verseRef.chapter,
-                verse: verseRef.verse,
-                title: "Verse \(verseRef.verse)",
-                content: "Tap to view verse content",
-                matchedText: nil
-            ))
+
+            if let verse = ref.verse {
+                results.append(BibleSearchResult(
+                    type: .verse,
+                    book: ref.book,
+                    chapter: ref.chapter,
+                    verse: verse,
+                    title: "Verse \(verse)",
+                    content: nil,
+                    matchedText: nil
+                ))
+            }
         }
         
         // Sort results by relevance
@@ -103,6 +104,22 @@ class BibleSearchManager: ObservableObject {
             let score1 = calculateRelevanceScore(result1, query: query)
             let score2 = calculateRelevanceScore(result2, query: query)
             return score1 > score2
+        }
+
+        // Prefetch verse content for verse results
+        for (index, result) in searchResults.enumerated() where result.type == .verse {
+            if let chapter = result.chapter, let verse = result.verse {
+                let ref = "\(result.book.id).\(chapter).\(verse)"
+                BibleAPI.shared.fetchVerse(reference: ref, bibleId: defaultBibleId) { res in
+                    if case .success(let verseObj) = res {
+                        DispatchQueue.main.async {
+                            if index < self.searchResults.count {
+                                self.searchResults[index].content = verseObj.cleanedText
+                            }
+                        }
+                    }
+                }
+            }
         }
         
         isSearching = false
@@ -121,6 +138,9 @@ class BibleSearchManager: ObservableObject {
         // Book name matches
         if result.book.name.lowercased().contains(query) {
             score += 30
+        } else {
+            let similarity = result.book.name.lowercased().similarityScore(to: query)
+            score += Int(similarity * 20)
         }
         
         // Type priority: verses > chapters > books for specific searches
@@ -133,43 +153,36 @@ class BibleSearchManager: ObservableObject {
         return score
     }
     
-    private func parseChapterReference(_ query: String) -> (book: BibleBook, chapter: Int)? {
-        let components = query.components(separatedBy: " ")
-        guard components.count >= 2,
-              let chapter = Int(components.last ?? "") else { return nil }
-        
-        let bookName = components.dropLast().joined(separator: " ")
-        
-        if let book = allBooks.first(where: {
-            $0.name.lowercased().hasPrefix(bookName.lowercased()) ||
-            $0.name.lowercased().contains(bookName.lowercased())
-        }) {
-            return (book, chapter)
+    private func bestMatchingBook(for name: String) -> BibleBook? {
+        let lower = name.lowercased()
+        let best = allBooks.max { a, b in
+            a.name.lowercased().similarityScore(to: lower) < b.name.lowercased().similarityScore(to: lower)
         }
-        
+        if let book = best, book.name.lowercased().similarityScore(to: lower) > 0.4 {
+            return book
+        }
         return nil
     }
-    
-    private func parseVerseReference(_ query: String) -> (book: BibleBook, chapter: Int, verse: Int)? {
-        let pattern = #"^(.+?)\s+(\d+):(\d+)$"#
+
+    private func parseReference(_ query: String) -> (book: BibleBook, chapter: Int, verse: Int?)? {
+        let pattern = #"^\s*(.+?)\s+(\d+)(?::(\d+))?\s*$"#
         let regex = try? NSRegularExpression(pattern: pattern)
         let nsString = query as NSString
         let range = NSRange(location: 0, length: nsString.length)
-        
-        guard let match = regex?.firstMatch(in: query, options: [], range: range),
-              match.numberOfRanges == 4 else { return nil }
-        
-        let bookName = nsString.substring(with: match.range(at: 1))
+        guard let match = regex?.firstMatch(in: query, options: [], range: range), match.numberOfRanges >= 3 else {
+            return nil
+        }
+
+        let namePart = nsString.substring(with: match.range(at: 1))
         let chapter = Int(nsString.substring(with: match.range(at: 2))) ?? 0
-        let verse = Int(nsString.substring(with: match.range(at: 3))) ?? 0
-        
-        if let book = allBooks.first(where: {
-            $0.name.lowercased().hasPrefix(bookName.lowercased()) ||
-            $0.name.lowercased().contains(bookName.lowercased())
-        }) {
+        var verse: Int? = nil
+        if match.numberOfRanges >= 4, match.range(at: 3).location != NSNotFound {
+            verse = Int(nsString.substring(with: match.range(at: 3)))
+        }
+
+        if let book = bestMatchingBook(for: namePart) {
             return (book, chapter, verse)
         }
-        
         return nil
     }
     
@@ -198,6 +211,7 @@ struct OverviewView: View {
     @State private var chaptersBookmarked: [String: Set<Int>] = [:]
     @State private var lastRead: [String: (chapter: Int, verse: Int)] = [:]
     @State private var selectedChapter: (book: BibleBook, chapter: Int)? = nil
+    @State private var scrollTargetBookId: String? = nil
 
     var body: some View {
         NavigationView {
@@ -215,7 +229,8 @@ struct OverviewView: View {
                     )
                 } else {
                     // Main Bible Overview
-                    List {
+                    ScrollViewReader { proxy in
+                        List {
                         TestamentSection(
                             title: "Old Testament",
                             categories: oldTestamentCategories,
@@ -238,8 +253,17 @@ struct OverviewView: View {
                                 selectedChapter = (book, chapter)
                             }
                         )
+                        }
+                        .listStyle(InsetGroupedListStyle())
+                        .onChange(of: scrollTargetBookId) { id in
+                            if let id = id {
+                                withAnimation {
+                                    proxy.scrollTo(id, anchor: .top)
+                                }
+                                scrollTargetBookId = nil
+                            }
+                        }
                     }
-                    .listStyle(InsetGroupedListStyle())
                 }
                 
                 // NavigationLink for chapter navigation
@@ -269,6 +293,7 @@ struct OverviewView: View {
             // Expand the book and scroll to it
             withAnimation(.easeInOut(duration: 0.5)) {
                 expandedBookId = result.book.id
+                scrollTargetBookId = result.book.id
             }
             searchManager.clearSearch()
             
@@ -375,7 +400,7 @@ struct SearchResultsView: View {
                 ScrollView {
                     LazyVStack(spacing: 0) {
                         ForEach(searchManager.searchResults) { result in
-                            SearchResultRow(result: result) {
+                            SearchResultRow(result: result, query: searchManager.searchText) {
                                 onSelectResult(result)
                             }
                             .padding(.horizontal)
@@ -393,6 +418,7 @@ struct SearchResultsView: View {
 // MARK: - Search Result Row
 struct SearchResultRow: View {
     let result: BibleSearchResult
+    let query: String
     let onTap: () -> Void
     
     var body: some View {
@@ -409,10 +435,9 @@ struct SearchResultRow: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                     
-                    // Main title
-                    Text(result.title)
+                    // Main title with highlight
+                    highlightedText(result.title, query: query)
                         .font(.headline)
-                        .foregroundColor(.primary)
                         .multilineTextAlignment(.leading)
                     
                     // Content if available
@@ -420,7 +445,7 @@ struct SearchResultRow: View {
                         Text(content)
                             .font(.body)
                             .foregroundColor(.secondary)
-                            .lineLimit(2)
+                            .lineLimit(result.type == .verse ? 4 : 2)
                             .multilineTextAlignment(.leading)
                     }
                 }
@@ -433,10 +458,33 @@ struct SearchResultRow: View {
             }
             .padding(.vertical, 12)
             .padding(.horizontal, 16)
-            .background(Color(.secondarySystemBackground))
+            .background(rowBackground)
             .cornerRadius(12)
         }
         .buttonStyle(PlainButtonStyle())
+    }
+
+    private func highlightedText(_ text: String, query: String) -> Text {
+        let lowerText = text.lowercased()
+        let lowerQuery = query.lowercased()
+        if let range = lowerText.range(of: lowerQuery) {
+            let start = text[..<range.lowerBound]
+            let match = text[range]
+            let end = text[range.upperBound...]
+            return Text(String(start)) +
+                Text(String(match)).foregroundColor(.accentColor) +
+                Text(String(end))
+        } else {
+            return Text(text)
+        }
+    }
+
+    private var rowBackground: Color {
+        switch result.type {
+        case .book: return Color.green.opacity(0.15)
+        case .chapter: return Color.orange.opacity(0.15)
+        case .verse: return Color.blue.opacity(0.15)
+        }
     }
     
     private var iconName: String {
@@ -518,6 +566,7 @@ struct CategorySection: View {
                     }
                 )
                 .listRowInsets(EdgeInsets())
+                .id(book.id)
             }
         }
         .padding(.vertical, 2)
