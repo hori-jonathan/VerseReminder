@@ -263,6 +263,17 @@ struct OverviewView: View {
                                 scrollTargetBookId = nil
                             }
                         }
+                        .onChange(of: searchManager.showingSearchResults) { showing in
+                            if !showing, let id = scrollTargetBookId {
+                                // When search results are dismissed, ensure we scroll to the target
+                                DispatchQueue.main.async {
+                                    withAnimation {
+                                        proxy.scrollTo(id, anchor: .center)
+                                    }
+                                    scrollTargetBookId = nil
+                                }
+                            }
+                        }
                     }
                 }
                 
