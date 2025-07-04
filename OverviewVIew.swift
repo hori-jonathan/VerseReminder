@@ -57,9 +57,11 @@ class BibleSearchManager: ObservableObject {
         var results: [BibleSearchResult] = []
         let query = searchText.lowercased()
         
-        // Search books
+        // Search books with fuzzy matching
         for book in allBooks {
-            if book.name.lowercased().contains(query) {
+            let bookName = book.name.lowercased()
+            let similarity = bookName.similarityScore(to: query)
+            if bookName.contains(query) || similarity > 0.6 {
                 results.append(BibleSearchResult(
                     type: .book,
                     book: book,
@@ -67,7 +69,7 @@ class BibleSearchManager: ObservableObject {
                     verse: nil,
                     title: book.name,
                     content: "\(book.chapters) chapters",
-                    matchedText: nil
+                    matchedText: query
                 ))
             }
         }
@@ -121,6 +123,9 @@ class BibleSearchManager: ObservableObject {
         // Book name matches
         if result.book.name.lowercased().contains(query) {
             score += 30
+        } else {
+            let similarity = result.book.name.lowercased().similarityScore(to: query)
+            score += Int(similarity * 20)
         }
         
         // Type priority: verses > chapters > books for specific searches
@@ -375,7 +380,7 @@ struct SearchResultsView: View {
                 ScrollView {
                     LazyVStack(spacing: 0) {
                         ForEach(searchManager.searchResults) { result in
-                            SearchResultRow(result: result) {
+                            SearchResultRow(result: result, query: searchManager.searchText) {
                                 onSelectResult(result)
                             }
                             .padding(.horizontal)
@@ -393,6 +398,7 @@ struct SearchResultsView: View {
 // MARK: - Search Result Row
 struct SearchResultRow: View {
     let result: BibleSearchResult
+    let query: String
     let onTap: () -> Void
     
     var body: some View {
@@ -409,10 +415,9 @@ struct SearchResultRow: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                     
-                    // Main title
-                    Text(result.title)
+                    // Main title with highlight
+                    highlightedText(result.title, query: query)
                         .font(.headline)
-                        .foregroundColor(.primary)
                         .multilineTextAlignment(.leading)
                     
                     // Content if available
@@ -433,10 +438,33 @@ struct SearchResultRow: View {
             }
             .padding(.vertical, 12)
             .padding(.horizontal, 16)
-            .background(Color(.secondarySystemBackground))
+            .background(rowBackground)
             .cornerRadius(12)
         }
         .buttonStyle(PlainButtonStyle())
+    }
+
+    private func highlightedText(_ text: String, query: String) -> Text {
+        let lowerText = text.lowercased()
+        let lowerQuery = query.lowercased()
+        if let range = lowerText.range(of: lowerQuery) {
+            let start = text[..<range.lowerBound]
+            let match = text[range]
+            let end = text[range.upperBound...]
+            return Text(String(start)) +
+                Text(String(match)).foregroundColor(.accentColor) +
+                Text(String(end))
+        } else {
+            return Text(text)
+        }
+    }
+
+    private var rowBackground: Color {
+        switch result.type {
+        case .book: return Color.green.opacity(0.15)
+        case .chapter: return Color.orange.opacity(0.15)
+        case .verse: return Color.blue.opacity(0.15)
+        }
     }
     
     private var iconName: String {
