@@ -262,7 +262,6 @@ struct OverviewView: View {
                         }
                         .onChange(of: searchManager.showingSearchResults) { showing in
                             if !showing, let id = scrollTargetBookId {
-                                // When search results are dismissed, ensure we scroll to the target
                                 Task { await attemptScroll(to: id, using: proxy) }
                             }
                         }
