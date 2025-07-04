@@ -210,7 +210,7 @@ struct OverviewView: View {
     @State private var chaptersRead: [String: Set<Int>] = [:]
     @State private var chaptersBookmarked: [String: Set<Int>] = [:]
     @State private var lastRead: [String: (chapter: Int, verse: Int)] = [:]
-    @State private var selectedChapter: (book: BibleBook, chapter: Int)? = nil
+    @State private var selectedChapter: (book: BibleBook, chapter: Int, verse: Int?)? = nil
     @State private var scrollTargetBookId: String? = nil
 
     var body: some View {
@@ -239,7 +239,7 @@ struct OverviewView: View {
                             chaptersBookmarked: $chaptersBookmarked,
                             lastRead: $lastRead,
                             onSelectChapter: { book, chapter in
-                                selectedChapter = (book, chapter)
+                                selectedChapter = (book, chapter, nil)
                             }
                         )
                         TestamentSection(
@@ -250,24 +250,26 @@ struct OverviewView: View {
                             chaptersBookmarked: $chaptersBookmarked,
                             lastRead: $lastRead,
                             onSelectChapter: { book, chapter in
-                                selectedChapter = (book, chapter)
+                                selectedChapter = (book, chapter, nil)
                             }
                         )
                         }
                         .listStyle(InsetGroupedListStyle())
                         .onChange(of: scrollTargetBookId) { id in
                             if let id = id {
-                                withAnimation {
-                                    proxy.scrollTo(id, anchor: .center)
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                    withAnimation(.easeInOut(duration: 0.5)) {
+                                        proxy.scrollTo(id, anchor: .center)
+                                    }
+                                    scrollTargetBookId = nil
                                 }
-                                scrollTargetBookId = nil
                             }
                         }
                         .onChange(of: searchManager.showingSearchResults) { showing in
                             if !showing, let id = scrollTargetBookId {
                                 // When search results are dismissed, ensure we scroll to the target
-                                DispatchQueue.main.async {
-                                    withAnimation {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                    withAnimation(.easeInOut(duration: 0.5)) {
                                         proxy.scrollTo(id, anchor: .center)
                                     }
                                     scrollTargetBookId = nil
@@ -282,7 +284,8 @@ struct OverviewView: View {
                     destination: selectedChapter.map {
                         ChapterView(
                             chapterId: "\($0.book.id).\($0.chapter)",
-                            bibleId: defaultBibleId
+                            bibleId: defaultBibleId,
+                            highlightVerse: $0.verse
                         )
                     },
                     isActive: Binding(
@@ -301,21 +304,21 @@ struct OverviewView: View {
     private func handleSearchResultSelection(_ result: BibleSearchResult) {
         switch result.type {
         case .book:
-            // Expand the book and scroll to it
-            withAnimation(.easeInOut(duration: 0.5)) {
-                expandedBookId = result.book.id
+            // Expand the selected book and ensure it comes into view
+            expandedBookId = result.book.id
+            searchManager.clearSearch()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 scrollTargetBookId = result.book.id
             }
-            searchManager.clearSearch()
             
         case .chapter:
             // Navigate to specific chapter
-            selectedChapter = (result.book, result.chapter ?? 1)
+            selectedChapter = (result.book, result.chapter ?? 1, nil)
             searchManager.clearSearch()
-            
+
         case .verse:
             // Navigate to chapter containing the verse
-            selectedChapter = (result.book, result.chapter ?? 1)
+            selectedChapter = (result.book, result.chapter ?? 1, result.verse)
             searchManager.clearSearch()
         }
     }

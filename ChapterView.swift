@@ -3,10 +3,12 @@ import SwiftUI
 struct ChapterView: View {
     let chapterId: String        // e.g. "GEN.1"
     let bibleId: String          // e.g. "179568874c45066f-01"
+    let highlightVerse: Int?
     
     @State private var verses: [Verse] = []
     @State private var error: String?
     @State private var isLoading = false
+    @State private var highlightedVerseId: String? = nil
 
     // Heading components
     var bookName: String {
@@ -53,14 +55,23 @@ struct ChapterView: View {
                 Text("Error: \(error)")
                     .foregroundColor(.red)
             } else {
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 6) {
-                        ForEach(verses, id: \.id) { verse in
-                            VerseRowView(verse: verse)
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 6) {
+                            ForEach(verses, id: \.id) { verse in
+                                VerseRowView(verse: verse, isHighlighted: verse.id == highlightedVerseId)
+                                    .id(verse.id)
+                            }
                         }
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
                     }
-                    .padding(.horizontal)
-                    .padding(.vertical, 8)
+                    .onChange(of: verses) { _ in
+                        highlightIfNeeded(using: proxy)
+                    }
+                    .onAppear {
+                        highlightIfNeeded(using: proxy)
+                    }
                 }
             }
         }
@@ -114,10 +125,29 @@ struct ChapterView: View {
             self.isLoading = false
         }
     }
+
+    private func highlightIfNeeded(using proxy: ScrollViewProxy) {
+        guard highlightedVerseId == nil,
+              let target = highlightVerse,
+              let id = verses.first(where: { Int($0.verseNumber) == target })?.id else { return }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation(.easeInOut(duration: 0.5)) {
+                proxy.scrollTo(id, anchor: .center)
+            }
+            highlightedVerseId = id
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    highlightedVerseId = nil
+                }
+            }
+        }
+    }
 }
 
 struct VerseRowView: View {
     let verse: Verse
+    let isHighlighted: Bool
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
             Text(verse.verseNumber)
@@ -127,6 +157,10 @@ struct VerseRowView: View {
             Text(verse.cleanedText)
         }
         .padding(.vertical, 2)
+        .padding(.horizontal, 4)
+        .background(isHighlighted ? Color.yellow.opacity(0.3) : Color.clear)
+        .cornerRadius(6)
+        .animation(.easeInOut(duration: 0.3), value: isHighlighted)
     }
 }
 
