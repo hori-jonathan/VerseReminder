@@ -9,4 +9,4 @@ An iOS app for Bible reading and verse tracking.
 - Smart search for books, chapters, and verses with fuzzy matching and colored results
   - Handles typos like "Mathew 4:3" and shows both chapter and verse hits
   - Verse results display full text
-  - Selecting a book result now expands its entry and scrolls the overview so the book is centered, even after dismissing search results
+  - Selecting a book result scrolls to and centers that book in the overview

@@ -13,7 +13,7 @@ extension String {
                 if source[i-1] == target[j-1] {
                     dist[i][j] = dist[i-1][j-1]
                 } else {
-                    dist[i][j] = min(dist[i-1][j-1], dist[i-1][j], dist[i][j-1]) + 1
+                    dist[i][j] = Swift.min(dist[i-1][j-1], dist[i-1][j], dist[i][j-1]) + 1
                 }
             }
         }
