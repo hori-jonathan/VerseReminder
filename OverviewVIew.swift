@@ -255,23 +255,25 @@ struct OverviewView: View {
                         )
                         }
                         .listStyle(InsetGroupedListStyle())
-                        .onChange(of: scrollTargetBookId) { id in
-                            if let id = id {
-                                attemptScroll(to: id, using: proxy)
+                        .task(id: scrollTargetBookId) {
+                            if let id = scrollTargetBookId {
+                                await attemptScroll(to: id, using: proxy)
                             }
                         }
                         .onChange(of: searchManager.showingSearchResults) { showing in
                             if !showing, let id = scrollTargetBookId {
                                 // When search results are dismissed, ensure we scroll to the target
-                                attemptScroll(to: id, using: proxy)
+                                Task { await attemptScroll(to: id, using: proxy) }
                             }
                         }
                         .onChange(of: expandedBookId) { id in
                             guard let id = id, id == scrollTargetBookId else { return }
                             // Scroll again after the dropdown expansion animation completes
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                                attemptScroll(to: id, using: proxy)
-                                scrollTargetBookId = nil
+                                Task {
+                                    await attemptScroll(to: id, using: proxy)
+                                    scrollTargetBookId = nil
+                                }
                             }
                         }
                     }
@@ -321,13 +323,13 @@ struct OverviewView: View {
         }
     }
 
-    private func attemptScroll(to id: String, using proxy: ScrollViewProxy) {
-        let delays: [Double] = [0.1, 0.35, 0.8]
+    @MainActor
+    private func attemptScroll(to id: String, using proxy: ScrollViewProxy) async {
+        let delays: [UInt64] = [100_000_000, 400_000_000, 800_000_000]
         for delay in delays {
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                withAnimation(.easeInOut(duration: 0.5)) {
-                    proxy.scrollTo(id, anchor: .center)
-                }
+            try? await Task.sleep(nanoseconds: delay)
+            withAnimation(.easeInOut(duration: 0.5)) {
+                proxy.scrollTo(id, anchor: .center)
             }
         }
     }
