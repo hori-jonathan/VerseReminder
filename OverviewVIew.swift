@@ -302,17 +302,25 @@ struct OverviewView: View {
                     EmptyView()
                 }
 
-                // Sheet for expanded book navigation
-                .sheet(item: $selectedExpandedBook) { book in
-                    ExpandedBookView(
-                        book: book,
-                        searchManager: searchManager,
-                        chaptersRead: $chaptersRead,
-                        chaptersBookmarked: $chaptersBookmarked,
-                        lastRead: $lastRead
-                    ) { b, chapter in
-                        selectedChapter = (b, chapter, nil)
-                    }
+                // NavigationLink for expanded book navigation
+                NavigationLink(
+                    destination: selectedExpandedBook.map {
+                        ExpandedBookView(
+                            book: $0,
+                            searchManager: searchManager,
+                            chaptersRead: $chaptersRead,
+                            chaptersBookmarked: $chaptersBookmarked,
+                            lastRead: $lastRead
+                        ) { book, chapter in
+                            selectedChapter = (book, chapter, nil)
+                        }
+                    },
+                    isActive: Binding(
+                        get: { selectedExpandedBook != nil },
+                        set: { if !$0 { selectedExpandedBook = nil } }
+                    )
+                ) {
+                    EmptyView()
                 }
             }
             .navigationTitle("Books")
@@ -665,7 +673,7 @@ struct BookDropdownCell: View {
             ZStack {
                 if showContent {
                     VStack(alignment: .leading, spacing: 14) {
-                        HStack(alignment: .center, spacing: 16) {
+                        HStack(alignment: .center, spacing: 12) {
                             ZStack {
                                 Circle()
                                     .stroke(Color.green.opacity(0.16), lineWidth: 6)
@@ -701,15 +709,15 @@ struct BookDropdownCell: View {
                                 }
                                 .padding(.top, 2)
                             }
+                            Spacer()
                             Button(action: onExpandBook) {
                                 Image(systemName: "arrow.up.left.and.arrow.down.right")
-                                    .font(.footnote)
+                                    .font(.subheadline.weight(.semibold))
                                     .foregroundColor(.white)
-                                    .padding(8)
+                                    .frame(width: 30, height: 30)
                                     .background(Color.purple)
-                                    .cornerRadius(8)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                             }
-                            Spacer()
                         }
                         // Chapter selector: scrollable horizontal
                         ScrollView(.horizontal, showsIndicators: false) {
