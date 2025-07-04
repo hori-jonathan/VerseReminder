@@ -302,25 +302,17 @@ struct OverviewView: View {
                     EmptyView()
                 }
 
-                // NavigationLink for expanded book navigation
-                NavigationLink(
-                    destination: selectedExpandedBook.map {
-                        ExpandedBookView(
-                            book: $0,
-                            searchManager: searchManager,
-                            chaptersRead: $chaptersRead,
-                            chaptersBookmarked: $chaptersBookmarked,
-                            lastRead: $lastRead
-                        ) { book, chapter in
-                            selectedChapter = (book, chapter, nil)
-                        }
-                    },
-                    isActive: Binding(
-                        get: { selectedExpandedBook != nil },
-                        set: { if !$0 { selectedExpandedBook = nil } }
-                    )
-                ) {
-                    EmptyView()
+                // Sheet for expanded book navigation
+                .sheet(item: $selectedExpandedBook) { book in
+                    ExpandedBookView(
+                        book: book,
+                        searchManager: searchManager,
+                        chaptersRead: $chaptersRead,
+                        chaptersBookmarked: $chaptersBookmarked,
+                        lastRead: $lastRead
+                    ) { b, chapter in
+                        selectedChapter = (b, chapter, nil)
+                    }
                 }
             }
             .navigationTitle("Books")
