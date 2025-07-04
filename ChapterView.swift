@@ -67,6 +67,24 @@ struct ChapterView: View {
                         .padding(.vertical, 8)
                     }
                     .onChange(of: verses) { _ in
+                        if let num = highlightVerse,
+                           let id = verses.first(where: { Int($0.verseNumber) == num })?.id {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                withAnimation(.easeInOut(duration: 0.5)) {
+                                    proxy.scrollTo(id, anchor: .center)
+                                }
+                                highlightedVerseId = id
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                    withAnimation(.easeInOut(duration: 0.5)) {
+                                        highlightedVerseId = nil
+                                    }
+                                }
+                            }
+                        }
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
+                    }
+                    .onChange(of: verses) { _ in
                         highlightIfNeeded(using: proxy)
                     }
                     .onAppear {
