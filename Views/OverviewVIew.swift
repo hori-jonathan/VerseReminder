@@ -251,7 +251,14 @@ struct OverviewView: View {
     @State private var scrollTargetBookId: String? = nil
 
     var body: some View {
-        VStack(spacing: 0) {
+        // Map the user profile arrays into sets for quick lookup
+        let chaptersRead = authViewModel.profile.chaptersRead.mapValues { Set($0) }
+        let chaptersBookmarked = authViewModel.profile.chaptersBookmarked.mapValues { Set($0) }
+        let lastRead = authViewModel.profile.lastRead.reduce(into: [String: (chapter: Int, verse: Int)]()) { partial, item in
+            partial[item.key] = (item.value["chapter"] ?? 1, item.value["verse"] ?? 0)
+        }
+
+        return VStack(spacing: 0) {
             // Search Bar
             SearchBar(searchManager: searchManager, placeholder: "Search books, chapters, verses...")
                 
@@ -267,12 +274,6 @@ struct OverviewView: View {
                     // Main Bible Overview
                     ScrollViewReader { proxy in
                         List {
-                        let chaptersRead = authViewModel.profile.chaptersRead.mapValues { Set($0) }
-                        let chaptersBookmarked = authViewModel.profile.chaptersBookmarked.mapValues { Set($0) }
-                        let lastRead = authViewModel.profile.lastRead.reduce(into: [String:(chapter:Int,verse:Int)]()) { dict, item in
-                            dict[item.key] = (item.value["chapter"] ?? 1, item.value["verse"] ?? 0)
-                        }
-
                         TestamentSection(
                             title: "Old Testament",
                             categories: oldTestamentCategories,
