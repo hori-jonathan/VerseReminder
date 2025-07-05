@@ -8,6 +8,7 @@ struct ExpandedBookView: View {
     let lastRead: [String: (chapter: Int, verse: Int)]
     let onSelectChapter: (BibleBook, Int) -> Void
 
+    @EnvironmentObject var booksNav: BooksNavigationManager
     @Environment(\.dismiss) private var dismiss
 
     @State private var selectedChapter: (book: BibleBook, chapter: Int, verse: Int?)? = nil
@@ -92,6 +93,9 @@ struct ExpandedBookView: View {
             ) { EmptyView() }
         }
         .onAppear { searchManager.scopeBook = book }
+        .onReceive(booksNav.$resetTrigger) { _ in
+            dismiss()
+        }
         .onDisappear {
             searchManager.scopeBook = nil
             searchManager.clearSearch()
@@ -134,11 +138,7 @@ struct ExpandedBookView: View {
     }
 
     private func backToBooks() {
-        for i in 0..<5 {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.05) {
-                dismiss()
-            }
-        }
+        booksNav.popToRoot()
     }
 }
 
