@@ -242,6 +242,9 @@ struct OverviewView: View {
                                 selectedChapter = (book, chapter, nil)
                             },
                             onExpandBook: { book in
+                                // Ensure chapter navigation is cleared so only the
+                                // expanded book view opens
+                                selectedChapter = nil
                                 selectedExpandedBook = book
                             }
                         )
@@ -256,6 +259,9 @@ struct OverviewView: View {
                                 selectedChapter = (book, chapter, nil)
                             },
                             onExpandBook: { book in
+                                // Clear any pending chapter navigation to avoid
+                                // triggering multiple links
+                                selectedChapter = nil
                                 selectedExpandedBook = book
                             }
                         )
@@ -330,6 +336,8 @@ struct OverviewView: View {
         switch result.type {
         case .book:
             // Navigate to the expanded view for the selected book
+            // Ensure chapter navigation is cleared first
+            selectedChapter = nil
             selectedExpandedBook = result.book
             searchManager.clearSearch()
             
