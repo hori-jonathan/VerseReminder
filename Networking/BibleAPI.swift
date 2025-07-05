@@ -101,14 +101,21 @@ class BibleAPI {
 // MARK: - HTML Stripping Extension
 extension String {
     func stripHTML() -> String {
-        guard let data = self.data(using: .utf16) else { return self }
+        // Attempt to convert the HTML string using UTF-8 which is more tolerant
+        // than UTF-16 for these API responses. If that fails, fall back to a
+        // simple regex based removal so we never crash when rendering verses.
+        guard let data = self.data(using: .utf8) else { return self }
         let options: [NSAttributedString.DocumentReadingOptionKey: Any] = [
             .documentType: NSAttributedString.DocumentType.html,
-            .characterEncoding: String.Encoding.utf16.rawValue
+            .characterEncoding: String.Encoding.utf8.rawValue
         ]
         if let attr = try? NSAttributedString(data: data, options: options, documentAttributes: nil) {
             return attr.string
         }
-        return self
+
+        // Fallback: remove tags with a basic regular expression
+        let regex = try? NSRegularExpression(pattern: "<[^>]+>", options: .caseInsensitive)
+        let range = NSRange(location: 0, length: self.utf16.count)
+        return regex?.stringByReplacingMatches(in: self, options: [], range: range, withTemplate: "") ?? self
     }
 }
