@@ -6,6 +6,7 @@ struct ChapterView: View {
     let highlightVerse: Int?
 
     @EnvironmentObject var authViewModel: AuthViewModel
+    @EnvironmentObject var booksNav: BooksNavigationManager
     @Environment(\.dismiss) private var dismiss
     
     @State private var verses: [Verse] = []
@@ -114,6 +115,9 @@ struct ChapterView: View {
             }
         }
         .onAppear(perform: loadChapter)
+        .onReceive(booksNav.$resetTrigger) { _ in
+            dismiss()
+        }
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
@@ -264,11 +268,7 @@ struct ChapterView: View {
     }
 
     private func backToBooks() {
-        for i in 0..<5 {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.05) {
-                dismiss()
-            }
-        }
+        booksNav.popToRoot()
     }
 
     private func openExpandedBook() {
