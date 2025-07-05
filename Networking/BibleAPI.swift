@@ -101,21 +101,27 @@ class BibleAPI {
 // MARK: - HTML Stripping Extension
 extension String {
     func stripHTML() -> String {
-        // Attempt to convert the HTML string using UTF-8 which is more tolerant
-        // than UTF-16 for these API responses. If that fails, fall back to a
-        // simple regex based removal so we never crash when rendering verses.
-        guard let data = self.data(using: .utf8) else { return self }
-        let options: [NSAttributedString.DocumentReadingOptionKey: Any] = [
-            .documentType: NSAttributedString.DocumentType.html,
-            .characterEncoding: String.Encoding.utf8.rawValue
-        ]
-        if let attr = try? NSAttributedString(data: data, options: options, documentAttributes: nil) {
-            return attr.string
-        }
+        // Using NSAttributedString can crash when the markup is malformed.
+        // Instead rely entirely on a regex pass to remove tags and then decode
+        // a handful of common HTML entities. This avoids any unexpected
+        // Objective-C exceptions while still returning readable text.
 
-        // Fallback: remove tags with a basic regular expression
         let regex = try? NSRegularExpression(pattern: "<[^>]+>", options: .caseInsensitive)
         let range = NSRange(location: 0, length: self.utf16.count)
-        return regex?.stringByReplacingMatches(in: self, options: [], range: range, withTemplate: "") ?? self
+        var stripped = regex?.stringByReplacingMatches(in: self, options: [], range: range, withTemplate: "") ?? self
+
+        // Decode some basic HTML entities the API commonly returns
+        let entities: [String: String] = [
+            "&quot;": "\"",
+            "&apos;": "'",
+            "&amp;": "&",
+            "&lt;": "<",
+            "&gt;": ">",
+            "&nbsp;": " "
+        ]
+        for (entity, replacement) in entities {
+            stripped = stripped.replacingOccurrences(of: entity, with: replacement)
+        }
+        return stripped
     }
 }
