@@ -8,6 +8,8 @@ class AuthViewModel: ObservableObject {
     @Published var isLoading: Bool = true
     @Published var error: Error?
 
+    private var signInRetries = 0
+
     private var listener: AuthStateDidChangeListenerHandle?
     private let dataStore = UserDataStore()
 
@@ -31,25 +33,37 @@ class AuthViewModel: ObservableObject {
     func signInAnonymouslyIfNeeded() {
         isLoading = true
         if Auth.auth().currentUser == nil {
-            Auth.auth().signInAnonymously { [weak self] result, error in
-                DispatchQueue.main.async {
-                    self?.isLoading = false
-                    if let error = error {
-                        self?.error = error
-                        let nsError = error as NSError
-                        print("Anonymous sign-in failed:", nsError, nsError.userInfo)
-                        if nsError.code == AuthErrorCode.internalError.rawValue,
-                           let underlying = nsError.userInfo[NSUnderlyingErrorKey] {
-                            print("Underlying error:", underlying)
-                        }
-                    } else {
-                        self?.user = result?.user
-                    }
-                }
-            }
+            attemptAnonymousSignIn()
         } else {
             self.user = Auth.auth().currentUser
             self.isLoading = false
+        }
+    }
+
+    private func attemptAnonymousSignIn() {
+        Auth.auth().signInAnonymously { [weak self] result, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    self?.signInRetries += 1
+                    let nsError = error as NSError
+                    print("Anonymous sign-in failed:", nsError, nsError.userInfo)
+                    if nsError.code == AuthErrorCode.internalError.rawValue,
+                       let underlying = nsError.userInfo[NSUnderlyingErrorKey] {
+                        print("Underlying error:", underlying)
+                    }
+                    if self?.signInRetries ?? 0 < 3 {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            self?.attemptAnonymousSignIn()
+                        }
+                    } else {
+                        self?.isLoading = false
+                        self?.error = error
+                    }
+                } else {
+                    self?.isLoading = false
+                    self?.user = result?.user
+                }
+            }
         }
     }
 

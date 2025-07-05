@@ -20,6 +20,10 @@ struct RootView: View {
                         Text("Error code: \(nsError.code)")
                             .font(.footnote)
                     }
+                    Button("Retry") {
+                        authViewModel.signInAnonymouslyIfNeeded()
+                    }
+                    .padding(.top)
                 }
             }
         }
