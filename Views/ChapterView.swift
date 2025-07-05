@@ -115,7 +115,7 @@ struct ChapterView: View {
             }
         }
         .onAppear(perform: loadChapter)
-        .onReceive(booksNav.$resetTrigger) { _ in
+        .onReceive(booksNav.$resetTrigger.dropFirst()) { _ in
             dismiss()
         }
         .navigationBarBackButtonHidden(true)

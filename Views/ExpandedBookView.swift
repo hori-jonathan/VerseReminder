@@ -93,7 +93,7 @@ struct ExpandedBookView: View {
             ) { EmptyView() }
         }
         .onAppear { searchManager.scopeBook = book }
-        .onReceive(booksNav.$resetTrigger) { _ in
+        .onReceive(booksNav.$resetTrigger.dropFirst()) { _ in
             dismiss()
         }
         .onDisappear {
