@@ -2,6 +2,7 @@ import SwiftUI
 
 struct BookmarksView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
+    @EnvironmentObject var booksNav: BooksNavigationManager
     @Environment(\.dismiss) private var dismiss
 
     @State private var verses: [Verse] = []
@@ -70,5 +71,6 @@ struct BookmarksView_Previews: PreviewProvider {
     static var previews: some View {
         BookmarksView()
             .environmentObject(AuthViewModel())
+            .environmentObject(BooksNavigationManager())
     }
 }

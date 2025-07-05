@@ -177,6 +177,7 @@ struct ChapterView: View {
 
         .sheet(isPresented: $showBookmarks) {
             BookmarksView()
+                .environmentObject(booksNav)
         }
     }
     

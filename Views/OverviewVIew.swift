@@ -246,6 +246,7 @@ struct OverviewView: View {
     @StateObject private var searchManager = BibleSearchManager()
     @State private var expandedBookId: String? = nil
     @EnvironmentObject var authViewModel: AuthViewModel
+    @EnvironmentObject var booksNav: BooksNavigationManager
     @State private var selectedChapter: (book: BibleBook, chapter: Int, verse: Int?)? = nil
     @State private var selectedExpandedBook: BibleBook? = nil
     @State private var scrollTargetBookId: String? = nil
@@ -388,6 +389,7 @@ struct OverviewView: View {
         }
         .sheet(isPresented: $showBookmarks) {
             BookmarksView()
+                .environmentObject(booksNav)
         }
     }
     

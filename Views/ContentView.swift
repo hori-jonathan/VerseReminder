@@ -28,6 +28,7 @@ struct ContentView: View {
                 }
 
                 BookmarksView()
+                    .environmentObject(booksNavigationManager)
                     .tabItem {
                         Image(systemName: "bookmark")
                         Text("Bookmarks")
