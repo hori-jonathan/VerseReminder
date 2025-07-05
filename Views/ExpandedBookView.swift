@@ -13,9 +13,6 @@ struct ExpandedBookView: View {
 
     @State private var selectedChapter: (book: BibleBook, chapter: Int, verse: Int?)? = nil
     @State private var selectedBook: BibleBook? = nil
-    // Records the trigger value when the view appears so we know when a
-    // subsequent change represents a pop-to-root action.
-    @State private var initialTrigger: Int? = nil
 
     var body: some View {
         VStack(spacing: 0) {
@@ -96,12 +93,8 @@ struct ExpandedBookView: View {
             ) { EmptyView() }
         }
         .onAppear { searchManager.scopeBook = book }
-        .onReceive(booksNav.$resetTrigger) { val in
-            if let initial = initialTrigger {
-                if val != initial { dismiss() }
-            } else {
-                initialTrigger = val
-            }
+        .onReceive(booksNav.$resetTrigger.dropFirst()) { _ in
+            dismiss()
         }
         .onDisappear {
             searchManager.scopeBook = nil

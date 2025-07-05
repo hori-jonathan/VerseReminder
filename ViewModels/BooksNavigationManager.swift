@@ -9,10 +9,15 @@ class BooksNavigationManager: ObservableObject {
 
     /// Call to trigger a pop-to-root of all active views in the Books stack.
     ///
-    /// Simply incrementing the trigger causes all subscribed views to
-    /// dismiss themselves if the value differs from the one they observed on
-    /// creation. This lets every active panel close simultaneously.
+    /// Sends several sequential increments so that each active view
+    /// in the stack receives a dismissal signal even if others are
+    /// still animating out. This avoids the back button effect where
+    /// only the top view closes.
     func popToRoot() {
-        resetTrigger += 1
+        for step in 0..<5 { // support up to 5 stacked views
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(step) * 0.05) {
+                self.resetTrigger += 1
+            }
+        }
     }
 }

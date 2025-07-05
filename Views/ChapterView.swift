@@ -17,8 +17,6 @@ struct ChapterView: View {
     @State private var navigateToNext: (bookId: String, chapter: Int)? = nil
     @State private var navigateToBook: BibleBook? = nil
     @StateObject private var searchManager = BibleSearchManager()
-    // Captures the BooksNavigationManager trigger value on appearance.
-    @State private var initialTrigger: Int? = nil
 
     // Heading components
     var bookName: String {
@@ -116,13 +114,9 @@ struct ChapterView: View {
                 }
             }
         }
-        .onAppear(perform: loadChapter)
-        .onReceive(booksNav.$resetTrigger) { val in
-            if let initial = initialTrigger {
-                if val != initial { dismiss() }
-            } else {
-                initialTrigger = val
-            }
+        .onAppear(perform: loadChapte
+        .onReceive(booksNav.$resetTrigger.dropFirst()) { _ in
+            dismiss()
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
