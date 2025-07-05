@@ -239,6 +239,9 @@ struct OverviewView: View {
                             chaptersBookmarked: $chaptersBookmarked,
                             lastRead: $lastRead,
                             onSelectChapter: { book, chapter in
+                                // When navigating directly to a chapter, clear
+                                // any active expanded book navigation
+                                selectedExpandedBook = nil
                                 selectedChapter = (book, chapter, nil)
                             },
                             onExpandBook: { book in
@@ -256,6 +259,8 @@ struct OverviewView: View {
                             chaptersBookmarked: $chaptersBookmarked,
                             lastRead: $lastRead,
                             onSelectChapter: { book, chapter in
+                                // Clear expanded book navigation when moving to a chapter
+                                selectedExpandedBook = nil
                                 selectedChapter = (book, chapter, nil)
                             },
                             onExpandBook: { book in
@@ -343,11 +348,15 @@ struct OverviewView: View {
             
         case .chapter:
             // Navigate to specific chapter
+            // Clear any active expanded book view before navigating
+            selectedExpandedBook = nil
             selectedChapter = (result.book, result.chapter ?? 1, nil)
             searchManager.clearSearch()
 
         case .verse:
             // Navigate to chapter containing the verse
+            // Ensure only the chapter view is pushed
+            selectedExpandedBook = nil
             selectedChapter = (result.book, result.chapter ?? 1, result.verse)
             searchManager.clearSearch()
         }
