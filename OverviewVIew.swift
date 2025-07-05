@@ -35,6 +35,7 @@ class BibleSearchManager: ObservableObject {
     @Published var searchResults: [BibleSearchResult] = []
     @Published var isSearching = false
     @Published var showingSearchResults = false
+    @Published var scopeBook: BibleBook? = nil
     
     private var searchTimer: Timer?
     private let allBooks: [BibleBook]
@@ -56,46 +57,51 @@ class BibleSearchManager: ObservableObject {
         
         var results: [BibleSearchResult] = []
         let query = searchText.lowercased()
-        
-        // Search books with fuzzy matching
-        for book in allBooks {
-            let bookName = book.name.lowercased()
-            let similarity = bookName.similarityScore(to: query)
-            if bookName.contains(query) || similarity > 0.5 {
-                results.append(BibleSearchResult(
-                    type: .book,
-                    book: book,
-                    chapter: nil,
-                    verse: nil,
-                    title: book.name,
-                    content: "\(book.chapters) chapters",
-                    matchedText: query
-                ))
-            }
-        }
-        
-        // Search for chapter/verse references like "John 3" or "John 3:16"
-        if let ref = parseReference(query) {
-            results.append(BibleSearchResult(
-                type: .chapter,
-                book: ref.book,
-                chapter: ref.chapter,
-                verse: nil,
-                title: "Chapter \(ref.chapter)",
-                content: nil,
-                matchedText: nil
-            ))
 
-            if let verse = ref.verse {
+        if let book = scopeBook {
+            let refs = parseScopedReferences(query, in: book)
+            results.append(contentsOf: refs)
+        } else {
+            // Search books with fuzzy matching
+            for book in allBooks {
+                let bookName = book.name.lowercased()
+                let similarity = bookName.similarityScore(to: query)
+                if bookName.contains(query) || similarity > 0.5 {
+                    results.append(BibleSearchResult(
+                        type: .book,
+                        book: book,
+                        chapter: nil,
+                        verse: nil,
+                        title: book.name,
+                        content: "\(book.chapters) chapters",
+                        matchedText: query
+                    ))
+                }
+            }
+
+            // Search for chapter/verse references like "John 3" or "John 3:16"
+            if let ref = parseReference(query) {
                 results.append(BibleSearchResult(
-                    type: .verse,
+                    type: .chapter,
                     book: ref.book,
                     chapter: ref.chapter,
-                    verse: verse,
-                    title: "Verse \(verse)",
+                    verse: nil,
+                    title: "Chapter \(ref.chapter)",
                     content: nil,
                     matchedText: nil
                 ))
+
+                if let verse = ref.verse {
+                    results.append(BibleSearchResult(
+                        type: .verse,
+                        book: ref.book,
+                        chapter: ref.chapter,
+                        verse: verse,
+                        title: "Verse \(verse)",
+                        content: nil,
+                        matchedText: nil
+                    ))
+                }
             }
         }
         
@@ -185,6 +191,37 @@ class BibleSearchManager: ObservableObject {
         }
         return nil
     }
+
+    private func parseScopedReferences(_ query: String, in book: BibleBook) -> [BibleSearchResult] {
+        var refs: [BibleSearchResult] = []
+        let pieces = query.split(separator: ",")
+        for piece in pieces {
+            let trimmed = piece.trimmingCharacters(in: .whitespaces)
+            guard !trimmed.isEmpty else { continue }
+            let pattern = #"^(\d+)(?::(\d+))?$"#
+            let regex = try? NSRegularExpression(pattern: pattern)
+            let ns = trimmed as NSString
+            let range = NSRange(location: 0, length: ns.length)
+            guard let match = regex?.firstMatch(in: trimmed, options: [], range: range) else { continue }
+            let chapter = Int(ns.substring(with: match.range(at: 1))) ?? 1
+            var verse: Int? = nil
+            if match.numberOfRanges >= 3, match.range(at: 2).location != NSNotFound {
+                verse = Int(ns.substring(with: match.range(at: 2)))
+            }
+            refs.append(
+                BibleSearchResult(
+                    type: verse == nil ? .chapter : .verse,
+                    book: book,
+                    chapter: chapter,
+                    verse: verse,
+                    title: verse == nil ? "Chapter \(chapter)" : "Verse \(verse!)",
+                    content: nil,
+                    matchedText: nil
+                )
+            )
+        }
+        return refs
+    }
     
     func debounceSearch() {
         searchTimer?.invalidate()
@@ -217,7 +254,7 @@ struct OverviewView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Search Bar
-            SearchBar(searchManager: searchManager)
+            SearchBar(searchManager: searchManager, placeholder: "Search books, chapters, verses...")
                 
                 if searchManager.showingSearchResults {
                     // Search Results View
@@ -377,6 +414,7 @@ struct OverviewView: View {
 // MARK: - Search Bar Component
 struct SearchBar: View {
     @ObservedObject var searchManager: BibleSearchManager
+    var placeholder: String = "Search..."
     @State private var isEditing = false
     
     var body: some View {
@@ -385,7 +423,7 @@ struct SearchBar: View {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(.secondary)
                 
-                TextField("Search books, chapters, verses...", text: $searchManager.searchText)
+                TextField(placeholder, text: $searchManager.searchText)
                     .textFieldStyle(PlainTextFieldStyle())
                     .onTapGesture {
                         isEditing = true

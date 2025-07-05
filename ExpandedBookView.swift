@@ -13,7 +13,7 @@ struct ExpandedBookView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            SearchBar(searchManager: searchManager)
+            SearchBar(searchManager: searchManager, placeholder: "Search \(book.name) (e.g., 3 or 3:16)")
             if searchManager.showingSearchResults {
                 SearchResultsView(searchManager: searchManager) { result in
                     handleSearchResult(result)
@@ -88,6 +88,11 @@ struct ExpandedBookView: View {
                     set: { if !$0 { selectedBook = nil } }
                 )
             ) { EmptyView() }
+        }
+        .onAppear { searchManager.scopeBook = book }
+        .onDisappear {
+            searchManager.scopeBook = nil
+            searchManager.clearSearch()
         }
         .navigationTitle(book.name)
         .navigationBarTitleDisplayMode(.inline)
