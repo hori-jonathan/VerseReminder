@@ -18,7 +18,8 @@ struct PlanCreatorView: View {
     @State private var startDate: Date = Date()
     @State private var notificationsEnabled: Bool = false
     @State private var readingDays: Set<String> = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-    @State private var allowNonLinear: Bool = false
+    @State private var allowNonLinear: Bool = true
+    @State private var preset: ReadingPlanPreset = .fullBible
 
     init(existingPlan: ReadingPlan? = nil) {
         self.existingPlan = existingPlan
@@ -29,7 +30,8 @@ struct PlanCreatorView: View {
         _startDate = State(initialValue: existingPlan?.startDate ?? Date())
         _notificationsEnabled = State(initialValue: existingPlan?.notificationsEnabled ?? false)
         _readingDays = State(initialValue: Set(existingPlan?.readingDays ?? ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]))
-        _allowNonLinear = State(initialValue: existingPlan?.allowNonLinear ?? false)
+        _allowNonLinear = State(initialValue: existingPlan?.allowNonLinear ?? true)
+        _preset = State(initialValue: existingPlan?.preset ?? .fullBible)
     }
     private let allDays = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
 
@@ -42,7 +44,9 @@ struct PlanCreatorView: View {
             readingDays: Array(readingDays),
             allowNonLinear: allowNonLinear,
             notificationsEnabled: notificationsEnabled,
-            goalType: goalType
+            goalType: goalType,
+            preset: preset,
+            nodes: []
         )
         return plan.estimatedCompletion
     }
@@ -52,6 +56,12 @@ struct PlanCreatorView: View {
             VStack(alignment: .leading, spacing: 20) {
                 TextField("Plan Name", text: $name)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
+
+                Picker("Plan Preset", selection: $preset) {
+                    ForEach(ReadingPlanPreset.allCases, id: \.self) { p in
+                        Text(String(describing: p).capitalized).tag(p)
+                    }
+                }
 
                 Picker("Goal", selection: $goalType) {
                     Text("Chapters/Day").tag(ReadingPlanGoalType.chaptersPerDay)
@@ -85,7 +95,6 @@ struct PlanCreatorView: View {
                     }
                 }
 
-                Toggle("Allow Non-Linear Reading", isOn: $allowNonLinear)
                 DatePicker("Start Date", selection: $startDate, displayedComponents: .date)
                 Toggle("Enable Notifications", isOn: $notificationsEnabled)
 
@@ -109,7 +118,9 @@ struct PlanCreatorView: View {
                         readingDays: Array(readingDays),
                         allowNonLinear: allowNonLinear,
                         notificationsEnabled: notificationsEnabled,
-                        goalType: goalType
+                        goalType: goalType,
+                        preset: preset,
+                        nodes: []
                     )
                     authViewModel.setReadingPlan(plan)
                     dismiss()
