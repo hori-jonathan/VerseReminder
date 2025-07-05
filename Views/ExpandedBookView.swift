@@ -3,9 +3,9 @@ import SwiftUI
 struct ExpandedBookView: View {
     var book: BibleBook
     @ObservedObject var searchManager: BibleSearchManager
-    @Binding var chaptersRead: [String: Set<Int>]
-    @Binding var chaptersBookmarked: [String: Set<Int>]
-    @Binding var lastRead: [String: (chapter: Int, verse: Int)]
+    let chaptersRead: [String: Set<Int>]
+    let chaptersBookmarked: [String: Set<Int>]
+    let lastRead: [String: (chapter: Int, verse: Int)]
     let onSelectChapter: (BibleBook, Int) -> Void
 
     @State private var selectedChapter: (book: BibleBook, chapter: Int, verse: Int?)? = nil
@@ -77,9 +77,9 @@ struct ExpandedBookView: View {
                     ExpandedBookView(
                         book: $0,
                         searchManager: searchManager,
-                        chaptersRead: $chaptersRead,
-                        chaptersBookmarked: $chaptersBookmarked,
-                        lastRead: $lastRead,
+                        chaptersRead: chaptersRead,
+                        chaptersBookmarked: chaptersBookmarked,
+                        lastRead: lastRead,
                         onSelectChapter: onSelectChapter
                     )
                 },

@@ -5,15 +5,16 @@ An iOS app for Bible reading and verse tracking.
 ## Onboarding & Authentication
 
 The app automatically signs users in anonymously with Firebase on first launch.
-Progress is stored in Firestore under the user's UID. The Settings tab lets
-anonymous users link their account to Google or email using Firebase's `link`
-API so progress can be synced across devices.
+Progress is stored in Firestore under the user's UID and loaded as part of each
+user's profile. Accounts can later be linked to Google or email using Firebase's
+`link` API so progress can be synced across devices.
 If the initial sign‑in fails due to a transient network error, the app will
 automatically retry a few times and provide a "Retry" button so you can manually
 attempt again.
 
 ## Features
 
+- Home screen summarizes your reading progress
 - Browse Bible books and chapters
 - Read verses with an API-based loader
 - Smart search for books, chapters, and verses with fuzzy matching and colored results

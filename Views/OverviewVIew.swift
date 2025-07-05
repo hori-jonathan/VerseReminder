@@ -245,15 +245,20 @@ class BibleSearchManager: ObservableObject {
 struct OverviewView: View {
     @StateObject private var searchManager = BibleSearchManager()
     @State private var expandedBookId: String? = nil
-    @State private var chaptersRead: [String: Set<Int>] = [:]
-    @State private var chaptersBookmarked: [String: Set<Int>] = [:]
-    @State private var lastRead: [String: (chapter: Int, verse: Int)] = [:]
+    @EnvironmentObject var authViewModel: AuthViewModel
     @State private var selectedChapter: (book: BibleBook, chapter: Int, verse: Int?)? = nil
     @State private var selectedExpandedBook: BibleBook? = nil
     @State private var scrollTargetBookId: String? = nil
 
     var body: some View {
-        VStack(spacing: 0) {
+        // Map the user profile arrays into sets for quick lookup
+        let chaptersRead = authViewModel.profile.chaptersRead.mapValues { Set($0) }
+        let chaptersBookmarked = authViewModel.profile.chaptersBookmarked.mapValues { Set($0) }
+        let lastRead = authViewModel.profile.lastRead.reduce(into: [String: (chapter: Int, verse: Int)]()) { partial, item in
+            partial[item.key] = (item.value["chapter"] ?? 1, item.value["verse"] ?? 0)
+        }
+
+        return VStack(spacing: 0) {
             // Search Bar
             SearchBar(searchManager: searchManager, placeholder: "Search books, chapters, verses...")
                 
@@ -269,13 +274,14 @@ struct OverviewView: View {
                     // Main Bible Overview
                     ScrollViewReader { proxy in
                         List {
+
                         TestamentSection(
                             title: "Old Testament",
                             categories: oldTestamentCategories,
                             expandedBookId: $expandedBookId,
-                            chaptersRead: $chaptersRead,
-                            chaptersBookmarked: $chaptersBookmarked,
-                            lastRead: $lastRead,
+                            chaptersRead: chaptersRead,
+                            chaptersBookmarked: chaptersBookmarked,
+                            lastRead: lastRead,
                             onSelectChapter: { book, chapter in
                                 // When navigating directly to a chapter, clear
                                 // any active expanded book navigation
@@ -293,9 +299,9 @@ struct OverviewView: View {
                             title: "New Testament",
                             categories: newTestamentCategories,
                             expandedBookId: $expandedBookId,
-                            chaptersRead: $chaptersRead,
-                            chaptersBookmarked: $chaptersBookmarked,
-                            lastRead: $lastRead,
+                            chaptersRead: chaptersRead,
+                            chaptersBookmarked: chaptersBookmarked,
+                            lastRead: lastRead,
                             onSelectChapter: { book, chapter in
                                 // Clear expanded book navigation when moving to a chapter
                                 selectedExpandedBook = nil
@@ -356,9 +362,9 @@ struct OverviewView: View {
                         ExpandedBookView(
                             book: book,
                             searchManager: searchManager,
-                            chaptersRead: $chaptersRead,
-                            chaptersBookmarked: $chaptersBookmarked,
-                            lastRead: $lastRead
+                            chaptersRead: chaptersRead,
+                            chaptersBookmarked: chaptersBookmarked,
+                            lastRead: lastRead
                         ) { b, chapter in
                             selectedChapter = (b, chapter, nil)
                         }
@@ -612,9 +618,9 @@ struct TestamentSection: View {
     let title: String
     let categories: [BookCategory]
     @Binding var expandedBookId: String?
-    @Binding var chaptersRead: [String: Set<Int>]
-    @Binding var chaptersBookmarked: [String: Set<Int>]
-    @Binding var lastRead: [String: (chapter: Int, verse: Int)]
+    let chaptersRead: [String: Set<Int>]
+    let chaptersBookmarked: [String: Set<Int>]
+    let lastRead: [String: (chapter: Int, verse: Int)]
     let onSelectChapter: (BibleBook, Int) -> Void
     let onExpandBook: (BibleBook) -> Void
 
@@ -624,9 +630,9 @@ struct TestamentSection: View {
                 CategorySection(
                     category: category,
                     expandedBookId: $expandedBookId,
-                    chaptersRead: $chaptersRead,
-                    chaptersBookmarked: $chaptersBookmarked,
-                    lastRead: $lastRead,
+                    chaptersRead: chaptersRead,
+                    chaptersBookmarked: chaptersBookmarked,
+                    lastRead: lastRead,
                     onSelectChapter: onSelectChapter,
                     onExpandBook: onExpandBook
                 )
@@ -639,9 +645,9 @@ struct TestamentSection: View {
 struct CategorySection: View {
     let category: BookCategory
     @Binding var expandedBookId: String?
-    @Binding var chaptersRead: [String: Set<Int>]
-    @Binding var chaptersBookmarked: [String: Set<Int>]
-    @Binding var lastRead: [String: (chapter: Int, verse: Int)]
+    let chaptersRead: [String: Set<Int>]
+    let chaptersBookmarked: [String: Set<Int>]
+    let lastRead: [String: (chapter: Int, verse: Int)]
     let onSelectChapter: (BibleBook, Int) -> Void
     let onExpandBook: (BibleBook) -> Void
 
