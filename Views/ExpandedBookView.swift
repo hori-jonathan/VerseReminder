@@ -8,6 +8,8 @@ struct ExpandedBookView: View {
     let lastRead: [String: (chapter: Int, verse: Int)]
     let onSelectChapter: (BibleBook, Int) -> Void
 
+    @Environment(\.dismiss) private var dismiss
+
     @State private var selectedChapter: (book: BibleBook, chapter: Int, verse: Int?)? = nil
     @State private var selectedBook: BibleBook? = nil
 
@@ -96,6 +98,17 @@ struct ExpandedBookView: View {
         }
         .navigationTitle(book.name)
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button(action: backToBooks) {
+                    HStack {
+                        Image(systemName: "chevron.backward")
+                        Text("Books")
+                    }
+                }
+            }
+        }
     }
 
     private func handleSearchResult(_ result: BibleSearchResult) {
@@ -113,6 +126,11 @@ struct ExpandedBookView: View {
             selectedChapter = (result.book, result.chapter ?? 1, result.verse)
             searchManager.clearSearch()
         }
+    }
+
+    private func backToBooks() {
+        dismiss()
+        DispatchQueue.main.async { dismiss() }
     }
 }
 

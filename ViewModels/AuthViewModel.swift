@@ -134,4 +134,18 @@ class AuthViewModel: ObservableObject {
         profile.lastRead[bookId] = ["chapter": chapter, "verse": verse]
         saveProfile()
     }
+
+    func updateLastRead(bookId: String, chapter: Int, verse: Int) {
+        profile.lastRead[bookId] = ["chapter": chapter, "verse": verse]
+        saveProfile()
+    }
+
+    func unmarkChapterRead(bookId: String, chapter: Int) {
+        var set = Set(profile.chaptersRead[bookId] ?? [])
+        if set.contains(chapter) {
+            set.remove(chapter)
+            profile.chaptersRead[bookId] = Array(set).sorted()
+            saveProfile()
+        }
+    }
 }

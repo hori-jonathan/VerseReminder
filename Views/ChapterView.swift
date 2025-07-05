@@ -6,11 +6,14 @@ struct ChapterView: View {
     let highlightVerse: Int?
 
     @EnvironmentObject var authViewModel: AuthViewModel
+    @Environment(\.dismiss) private var dismiss
     
     @State private var verses: [Verse] = []
     @State private var error: String?
     @State private var isLoading = false
     @State private var highlightedVerseId: String? = nil
+    @State private var isCompleted: Bool = false
+    @State private var navigateToNext: (bookId: String, chapter: Int)? = nil
 
     // Heading components
     var bookName: String {
@@ -27,6 +30,10 @@ struct ChapterView: View {
 
     var bookId: String {
         chapterId.components(separatedBy: ".").first ?? ""
+    }
+
+    var allBooks: [BibleBook] {
+        (oldTestamentCategories + newTestamentCategories).flatMap { $0.books }
     }
     
     var body: some View {
@@ -75,6 +82,22 @@ struct ChapterView: View {
                         }
                         .padding(.horizontal)
                         .padding(.vertical, 8)
+
+                        CompleteChapterToggle(
+                            isCompleted: $isCompleted,
+                            onToggle: { completed in
+                                if completed {
+                                    authViewModel.markChapterRead(bookId: bookId, chapter: chapterInt, verse: 0)
+                                } else {
+                                    authViewModel.unmarkChapterRead(bookId: bookId, chapter: chapterInt)
+                                }
+                            },
+                            onSwipeComplete: {
+                                markCompleteAndAdvance()
+                            }
+                        )
+                        .padding(.vertical, 12)
+                        .padding(.horizontal)
                     }
                     .onAppear {
                         highlightIfNeeded(using: proxy)
@@ -86,14 +109,60 @@ struct ChapterView: View {
             }
         }
         .onAppear(perform: loadChapter)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button(action: backToBooks) {
+                    HStack {
+                        Image(systemName: "chevron.backward")
+                        Text("Books")
+                    }
+                }
+            }
+        }
+
+        NavigationLink(
+            destination: navigateToNext.map {
+                ChapterView(
+                    chapterId: "\($0.bookId).\($0.chapter)",
+                    bibleId: bibleId,
+                    highlightVerse: nil
+                )
+            },
+            isActive: Binding(
+                get: { navigateToNext != nil },
+                set: { if !$0 { navigateToNext = nil } }
+            )
+        ) { EmptyView() }
     }
     
     // MARK: - Previous/Next chapter navigation
     func previousChapter() {
-        // TODO: Implement navigation to previous chapter if you wish
+        guard let currentBook = allBooks.first(where: { $0.id == bookId }),
+              let index = allBooks.firstIndex(of: currentBook) else { return }
+        var newBook = currentBook
+        var chapter = chapterInt - 1
+        if chapter < 1 {
+            let prevIndex = index - 1
+            guard prevIndex >= 0 else { return }
+            newBook = allBooks[prevIndex]
+            chapter = newBook.chapters
+        }
+        navigateToNext = (newBook.id, chapter)
     }
+
     func nextChapter() {
-        // TODO: Implement navigation to next chapter if you wish
+        guard let currentBook = allBooks.first(where: { $0.id == bookId }),
+              let index = allBooks.firstIndex(of: currentBook) else { return }
+        var newBook = currentBook
+        var chapter = chapterInt + 1
+        if chapter > currentBook.chapters {
+            let nextIndex = index + 1
+            guard nextIndex < allBooks.count else { return }
+            newBook = allBooks[nextIndex]
+            chapter = 1
+        }
+        navigateToNext = (newBook.id, chapter)
     }
     
     // MARK: - Load chapter
@@ -133,7 +202,8 @@ struct ChapterView: View {
         group.notify(queue: .main) {
             self.verses = loadedVerses
             self.isLoading = false
-            authViewModel.markChapterRead(bookId: bookId, chapter: chapterInt, verse: highlightVerse ?? 0)
+            self.isCompleted = authViewModel.profile.chaptersRead[bookId]?.contains(chapterInt) ?? false
+            authViewModel.updateLastRead(bookId: bookId, chapter: chapterInt, verse: highlightVerse ?? 0)
         }
     }
 
@@ -153,6 +223,19 @@ struct ChapterView: View {
                 }
             }
         }
+    }
+
+    private func markCompleteAndAdvance() {
+        if !isCompleted {
+            isCompleted = true
+            authViewModel.markChapterRead(bookId: bookId, chapter: chapterInt, verse: 0)
+        }
+        nextChapter()
+    }
+
+    private func backToBooks() {
+        dismiss()
+        DispatchQueue.main.async { dismiss() }
     }
 }
 
@@ -195,6 +278,68 @@ extension Verse {
             return String(stripped.dropFirst("\(num)".count)).trimmingCharacters(in: .whitespaces)
         } else {
             return stripped
+        }
+    }
+}
+
+// MARK: - Complete Chapter Toggle
+struct CompleteChapterToggle: View {
+    @Binding var isCompleted: Bool
+    let onToggle: (Bool) -> Void
+    let onSwipeComplete: () -> Void
+
+    @State private var dragOffset: CGFloat = 0
+
+    private let height: CGFloat = 44
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack {
+                Capsule()
+                    .stroke(Color.black, lineWidth: 1)
+                    .background(
+                        Capsule()
+                            .fill(isCompleted ? Color.black : Color.clear)
+                    )
+
+                Text(isCompleted ? "Completed" : "Complete Chapter")
+                    .foregroundColor(isCompleted ? .white : .black)
+                    .frame(maxWidth: .infinity)
+
+                Circle()
+                    .fill(Color.black)
+                    .frame(width: height - 8, height: height - 8)
+                    .offset(x: dragOffset - (geo.size.width / 2 - height / 2))
+                    .gesture(
+                        DragGesture()
+                            .onChanged { value in
+                                dragOffset = max(0, min(value.translation.width, geo.size.width - height))
+                            }
+                            .onEnded { _ in
+                                if dragOffset > geo.size.width * 0.65 {
+                                    if !isCompleted {
+                                        isCompleted = true
+                                        onToggle(true)
+                                    }
+                                    onSwipeComplete()
+                                } else if dragOffset > geo.size.width * 0.1 {
+                                    isCompleted.toggle()
+                                    onToggle(isCompleted)
+                                }
+                                dragOffset = 0
+                            }
+                    )
+                    .overlay(
+                        Image(systemName: isCompleted ? "checkmark" : "chevron.right")
+                            .foregroundColor(.white)
+                    )
+            }
+            .frame(height: height)
+        }
+        .frame(height: height)
+        .onTapGesture {
+            isCompleted.toggle()
+            onToggle(isCompleted)
         }
     }
 }
