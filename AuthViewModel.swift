@@ -32,6 +32,7 @@ class AuthViewModel: ObservableObject {
                     self?.isLoading = false
                     if let error = error {
                         self?.error = error
+                        print("Anonymous sign-in failed:", error)
                     } else {
                         self?.user = result?.user
                     }

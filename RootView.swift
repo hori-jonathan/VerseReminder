@@ -16,6 +16,9 @@ struct RootView: View {
                     if let error = authViewModel.error {
                         Text(error.localizedDescription)
                             .foregroundColor(.red)
+                        let nsError = error as NSError
+                        Text("Error code: \(nsError.code)")
+                            .font(.footnote)
                     }
                 }
             }
