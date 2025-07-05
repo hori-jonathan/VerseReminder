@@ -101,11 +101,16 @@ struct ExpandedBookView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
-                Button(action: backToBooks) {
+                Button(action: { dismiss() }) {
                     HStack {
                         Image(systemName: "chevron.backward")
-                        Text("Books")
+                        Text("Back")
                     }
+                }
+            }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: backToBooks) {
+                    Image(systemName: "book.closed")
                 }
             }
         }
@@ -129,8 +134,11 @@ struct ExpandedBookView: View {
     }
 
     private func backToBooks() {
-        dismiss()
-        DispatchQueue.main.async { dismiss() }
+        for i in 0..<5 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.05) {
+                dismiss()
+            }
+        }
     }
 }
 

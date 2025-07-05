@@ -14,11 +14,13 @@ struct ChapterView: View {
     @State private var highlightedVerseId: String? = nil
     @State private var isCompleted: Bool = false
     @State private var navigateToNext: (bookId: String, chapter: Int)? = nil
+    @State private var navigateToBook: BibleBook? = nil
+    @StateObject private var searchManager = BibleSearchManager()
 
     // Heading components
     var bookName: String {
-        // Optional: Map abbreviation to name, or just display abbreviation for now
-        chapterId.components(separatedBy: ".").first ?? ""
+        let abbrev = chapterId.components(separatedBy: ".").first ?? ""
+        return allBooks.first(where: { $0.id == abbrev })?.name ?? abbrev
     }
     var chapterNumber: String {
         chapterId.components(separatedBy: ".").last ?? ""
@@ -48,10 +50,13 @@ struct ChapterView: View {
                 
                 Spacer()
                 
-                Text("\(bookName) \(chapterNumber)")
-                    .font(.title2)
-                    .bold()
-                    .padding(.vertical, 8)
+                Button(action: openExpandedBook) {
+                    Text("\(bookName) \(chapterNumber)")
+                        .font(.title2)
+                        .bold()
+                        .padding(.vertical, 8)
+                }
+                .buttonStyle(PlainButtonStyle())
                 
                 Spacer()
                 
@@ -112,11 +117,16 @@ struct ChapterView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
-                Button(action: backToBooks) {
+                Button(action: { dismiss() }) {
                     HStack {
                         Image(systemName: "chevron.backward")
-                        Text("Books")
+                        Text("Back")
                     }
+                }
+            }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: backToBooks) {
+                    Image(systemName: "book.closed")
                 }
             }
         }
@@ -132,6 +142,26 @@ struct ChapterView: View {
             isActive: Binding(
                 get: { navigateToNext != nil },
                 set: { if !$0 { navigateToNext = nil } }
+            )
+        ) { EmptyView() }
+
+        NavigationLink(
+            destination: navigateToBook.map { book in
+                ExpandedBookView(
+                    book: book,
+                    searchManager: searchManager,
+                    chaptersRead: authViewModel.profile.chaptersRead.mapValues { Set($0) },
+                    chaptersBookmarked: authViewModel.profile.chaptersBookmarked.mapValues { Set($0) },
+                    lastRead: authViewModel.profile.lastRead.reduce(into: [String: (chapter: Int, verse: Int)]()) { partial, item in
+                        partial[item.key] = (item.value["chapter"] ?? 1, item.value["verse"] ?? 0)
+                    }
+                ) { b, chapter in
+                    navigateToNext = (b.id, chapter)
+                }
+            },
+            isActive: Binding(
+                get: { navigateToBook != nil },
+                set: { if !$0 { navigateToBook = nil } }
             )
         ) { EmptyView() }
     }
@@ -234,8 +264,17 @@ struct ChapterView: View {
     }
 
     private func backToBooks() {
-        dismiss()
-        DispatchQueue.main.async { dismiss() }
+        for i in 0..<5 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.05) {
+                dismiss()
+            }
+        }
+    }
+
+    private func openExpandedBook() {
+        if let book = allBooks.first(where: { $0.id == bookId }) {
+            navigateToBook = book
+        }
     }
 }
 
