@@ -126,6 +126,7 @@ struct ExpandedBookView: View {
         }
         .sheet(isPresented: $showBookmarks) {
             BookmarksView()
+                .environmentObject(booksNav)
         }
     }
 
