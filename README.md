@@ -24,4 +24,6 @@ attempt again.
   - Book scrolling uses async repeated attempts to reliably center the selected book
   - Each book dropdown offers an "Expand Book" button for quick access to the grid view
 - Flexible reading plans with support for finish-by-date or chapters-per-day goals
+- Reading plans are non-linear by default and can be built from presets such as the full Bible, Old or New Testament, Gospels, Prophets, and more
+- Each plan stores a progress tree so completion can be computed from your reading history
 - Edit your reading plan anytime from the Home tab

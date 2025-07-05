@@ -8,6 +8,56 @@ enum ReadingPlanGoalType: String, Codable {
     case flexible
 }
 
+/// High level preset categories for building a reading plan
+enum ReadingPlanPreset: String, CaseIterable, Codable {
+    case fullBible
+    case oldTestament
+    case newTestament
+    case gospels
+    case prophets
+    case wisdomBooks
+    case epistles
+    case prayers
+    case custom
+}
+
+/// Node describing a single step in a reading plan tree
+struct ReadingPlanNode: Codable, Identifiable {
+    var id: String = UUID().uuidString
+    var title: String
+    var bookId: String?
+    var chapter: Int?
+    var children: [ReadingPlanNode] = []
+
+    func flatten() -> [ReadingPlanNode] {
+        [self] + children.flatMap { $0.flatten() }
+    }
+}
+
+extension ReadingPlanNode {
+    init?(dict: [String: Any]) {
+        guard let title = dict["title"] as? String else { return nil }
+        self.title = title
+        id = dict["id"] as? String ?? UUID().uuidString
+        bookId = dict["bookId"] as? String
+        chapter = dict["chapter"] as? Int
+        if let childData = dict["children"] as? [[String: Any]] {
+            children = childData.compactMap { ReadingPlanNode(dict: $0) }
+        }
+    }
+
+    var dictionary: [String: Any] {
+        var dict: [String: Any] = [
+            "id": id,
+            "title": title
+        ]
+        if let bookId = bookId { dict["bookId"] = bookId }
+        if let chapter = chapter { dict["chapter"] = chapter }
+        if !children.isEmpty { dict["children"] = children.map { $0.dictionary } }
+        return dict
+    }
+}
+
 /// A more flexible reading plan model. It supports "finish by date" or
 /// "chapters per day" styles as well as custom reading days and other
 /// preferences. This is only a starting point and does not yet implement a
@@ -32,14 +82,21 @@ struct ReadingPlan: Codable, Identifiable {
     /// abbreviations ("Mon", "Tue", etc.).
     var readingDays: [String] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
-    /// Whether the plan uses a sequential order or allows non-linear reading.
-    var allowNonLinear: Bool = false
+    /// Plans default to non-linear reading; the property remains for backward
+    /// compatibility but is always `true` for new plans.
+    var allowNonLinear: Bool = true
 
     /// Notifications/encouragements enabled
     var notificationsEnabled: Bool = false
 
     /// How the goal is interpreted
     var goalType: ReadingPlanGoalType = .chaptersPerDay
+
+    /// Optional preset category that defines the scope of reading
+    var preset: ReadingPlanPreset = .fullBible
+
+    /// Progress tree nodes describing the reading order
+    var nodes: [ReadingPlanNode] = []
 
     /// Estimated completion based on the goal settings. For finish-by-date
     /// plans this simply returns `finishBy`. For chapter based plans the total
@@ -59,6 +116,20 @@ struct ReadingPlan: Codable, Identifiable {
             return startDate
         }
     }
+
+    /// Percentage completion based on chapters marked read in the given profile
+    func completionPercentage(using profile: UserProfile) -> Double {
+        let allNodes = nodes.flatMap { $0.flatten() }
+        let total = allNodes.count
+        guard total > 0 else { return 0 }
+        let finished = allNodes.filter { node in
+            if let bid = node.bookId, let chap = node.chapter {
+                return profile.chaptersRead[bid]?.contains(chap) ?? false
+            }
+            return false
+        }.count
+        return Double(finished) / Double(total)
+    }
 }
 
 extension ReadingPlan {
@@ -71,9 +142,13 @@ extension ReadingPlan {
         if let finish = dict["finishBy"] as? Timestamp { finishBy = finish.dateValue() }
         chaptersPerDay = dict["chaptersPerDay"] as? Int
         readingDays = dict["readingDays"] as? [String] ?? ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
-        allowNonLinear = dict["allowNonLinear"] as? Bool ?? false
+        allowNonLinear = dict["allowNonLinear"] as? Bool ?? true
         notificationsEnabled = dict["notificationsEnabled"] as? Bool ?? false
         goalType = ReadingPlanGoalType(rawValue: dict["goalType"] as? String ?? "chaptersPerDay") ?? .chaptersPerDay
+        preset = ReadingPlanPreset(rawValue: dict["preset"] as? String ?? "fullBible") ?? .fullBible
+        if let nodeData = dict["nodes"] as? [[String: Any]] {
+            nodes = nodeData.compactMap { ReadingPlanNode(dict: $0) }
+        }
     }
 
     var dictionary: [String: Any] {
@@ -84,7 +159,9 @@ extension ReadingPlan {
             "readingDays": readingDays,
             "allowNonLinear": allowNonLinear,
             "notificationsEnabled": notificationsEnabled,
-            "goalType": goalType.rawValue
+            "goalType": goalType.rawValue,
+            "preset": preset.rawValue,
+            "nodes": nodes.map { $0.dictionary }
         ]
         if let color = colorHex { dict["colorHex"] = color }
         if let finish = finishBy { dict["finishBy"] = Timestamp(date: finish) }
