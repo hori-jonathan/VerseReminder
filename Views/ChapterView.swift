@@ -17,6 +17,7 @@ struct ChapterView: View {
     @State private var navigateToNext: (bookId: String, chapter: Int)? = nil
     @State private var navigateToBook: BibleBook? = nil
     @StateObject private var searchManager = BibleSearchManager()
+    @State private var hasReceivedTrigger = false
 
     // Heading components
     var bookName: String {
@@ -116,7 +117,11 @@ struct ChapterView: View {
         }
         .onAppear(perform: loadChapter)
         .onReceive(booksNav.$resetTrigger) { _ in
-            dismiss()
+            if hasReceivedTrigger {
+                dismiss()
+            } else {
+                hasReceivedTrigger = true
+            }
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
