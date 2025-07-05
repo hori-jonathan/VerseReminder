@@ -12,7 +12,7 @@ enum ReadingPlanGoalType: String, Codable {
 /// "chapters per day" styles as well as custom reading days and other
 /// preferences. This is only a starting point and does not yet implement a
 /// full scheduling engine.
-struct ReadingPlan: Codable {
+struct ReadingPlan: Codable, Identifiable {
     var id: String = UUID().uuidString
     var name: String = "Reading Plan"
     var colorHex: String? = nil

@@ -23,4 +23,5 @@ attempt again.
   - Selecting a book result opens an expanded view listing all chapters in a grid
   - Book scrolling uses async repeated attempts to reliably center the selected book
   - Each book dropdown offers an "Expand Book" button for quick access to the grid view
- - Flexible reading plans with support for finish-by-date or chapters-per-day goals
+- Flexible reading plans with support for finish-by-date or chapters-per-day goals
+- Edit your reading plan anytime from the Home tab

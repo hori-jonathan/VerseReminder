@@ -5,6 +5,9 @@ import SwiftUI
 /// covers a subset of all options but demonstrates how a user can configure
 /// a goal and schedule.
 struct PlanCreatorView: View {
+    /// If non-nil the view edits an existing plan instead of creating a new one.
+    var existingPlan: ReadingPlan?
+
     @EnvironmentObject var authViewModel: AuthViewModel
     @Environment(\.dismiss) private var dismiss
 
@@ -17,6 +20,17 @@ struct PlanCreatorView: View {
     @State private var readingDays: Set<String> = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     @State private var allowNonLinear: Bool = false
 
+    init(existingPlan: ReadingPlan? = nil) {
+        self.existingPlan = existingPlan
+        _name = State(initialValue: existingPlan?.name ?? "My Plan")
+        _goalType = State(initialValue: existingPlan?.goalType ?? .chaptersPerDay)
+        _chaptersPerDay = State(initialValue: existingPlan?.chaptersPerDay ?? 1)
+        _finishBy = State(initialValue: existingPlan?.finishBy ?? Calendar.current.date(byAdding: .month, value: 3, to: Date()) ?? Date())
+        _startDate = State(initialValue: existingPlan?.startDate ?? Date())
+        _notificationsEnabled = State(initialValue: existingPlan?.notificationsEnabled ?? false)
+        _readingDays = State(initialValue: Set(existingPlan?.readingDays ?? ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]))
+        _allowNonLinear = State(initialValue: existingPlan?.allowNonLinear ?? false)
+    }
     private let allDays = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
 
     var estimatedCompletion: Date {
@@ -83,7 +97,7 @@ struct PlanCreatorView: View {
             }
             .padding()
         }
-        .navigationTitle("Create Plan")
+        .navigationTitle(existingPlan == nil ? "Create Plan" : "Edit Plan")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button("Save") {
@@ -99,6 +113,16 @@ struct PlanCreatorView: View {
                     )
                     authViewModel.setReadingPlan(plan)
                     dismiss()
+                }
+            }
+            if existingPlan != nil {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(role: .destructive) {
+                        authViewModel.deleteReadingPlan()
+                        dismiss()
+                    } label: {
+                        Text("Delete")
+                    }
                 }
             }
         }
