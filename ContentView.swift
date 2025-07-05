@@ -17,6 +17,15 @@ struct ContentView: View {
                     Image(systemName: "book.closed")
                     Text("Books")
                 }
+
+                // Settings tab
+                NavigationView {
+                    SettingsView()
+                }
+                .tabItem {
+                    Image(systemName: "gear")
+                    Text("Settings")
+                }
             }
         }
     }
