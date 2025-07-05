@@ -11,6 +11,8 @@ struct ChapterView: View {
     @State private var error: String?
     @State private var isLoading = false
     @State private var highlightedVerseId: String? = nil
+    @State private var isCompleted: Bool = false
+    @State private var navigateToNext: (bookId: String, chapter: Int)? = nil
 
     // Heading components
     var bookName: String {
@@ -27,6 +29,10 @@ struct ChapterView: View {
 
     var bookId: String {
         chapterId.components(separatedBy: ".").first ?? ""
+    }
+
+    var allBooks: [BibleBook] {
+        (oldTestamentCategories + newTestamentCategories).flatMap { $0.books }
     }
     
     var body: some View {
@@ -75,6 +81,22 @@ struct ChapterView: View {
                         }
                         .padding(.horizontal)
                         .padding(.vertical, 8)
+
+                        CompleteChapterToggle(
+                            isCompleted: $isCompleted,
+                            onToggle: { completed in
+                                if completed {
+                                    authViewModel.markChapterRead(bookId: bookId, chapter: chapterInt, verse: 0)
+                                } else {
+                                    authViewModel.unmarkChapterRead(bookId: bookId, chapter: chapterInt)
+                                }
+                            },
+                            onSwipeComplete: {
+                                markCompleteAndAdvance()
+                            }
+                        )
+                        .padding(.vertical, 12)
+                        .padding(.horizontal)
                     }
                     .onAppear {
                         highlightIfNeeded(using: proxy)
@@ -86,14 +108,49 @@ struct ChapterView: View {
             }
         }
         .onAppear(perform: loadChapter)
+
+        NavigationLink(
+            destination: navigateToNext.map {
+                ChapterView(
+                    chapterId: "\($0.bookId).\($0.chapter)",
+                    bibleId: bibleId,
+                    highlightVerse: nil
+                )
+            },
+            isActive: Binding(
+                get: { navigateToNext != nil },
+                set: { if !$0 { navigateToNext = nil } }
+            )
+        ) { EmptyView() }
     }
     
     // MARK: - Previous/Next chapter navigation
     func previousChapter() {
-        // TODO: Implement navigation to previous chapter if you wish
+        guard let currentBook = allBooks.first(where: { $0.id == bookId }),
+              let index = allBooks.firstIndex(of: currentBook) else { return }
+        var newBook = currentBook
+        var chapter = chapterInt - 1
+        if chapter < 1 {
+            let prevIndex = index - 1
+            guard prevIndex >= 0 else { return }
+            newBook = allBooks[prevIndex]
+            chapter = newBook.chapters
+        }
+        navigateToNext = (newBook.id, chapter)
     }
+
     func nextChapter() {
-        // TODO: Implement navigation to next chapter if you wish
+        guard let currentBook = allBooks.first(where: { $0.id == bookId }),
+              let index = allBooks.firstIndex(of: currentBook) else { return }
+        var newBook = currentBook
+        var chapter = chapterInt + 1
+        if chapter > currentBook.chapters {
+            let nextIndex = index + 1
+            guard nextIndex < allBooks.count else { return }
+            newBook = allBooks[nextIndex]
+            chapter = 1
+        }
+        navigateToNext = (newBook.id, chapter)
     }
     
     // MARK: - Load chapter
@@ -133,7 +190,8 @@ struct ChapterView: View {
         group.notify(queue: .main) {
             self.verses = loadedVerses
             self.isLoading = false
-            authViewModel.markChapterRead(bookId: bookId, chapter: chapterInt, verse: highlightVerse ?? 0)
+            self.isCompleted = authViewModel.profile.chaptersRead[bookId]?.contains(chapterInt) ?? false
+            authViewModel.updateLastRead(bookId: bookId, chapter: chapterInt, verse: highlightVerse ?? 0)
         }
     }
 
@@ -153,6 +211,14 @@ struct ChapterView: View {
                 }
             }
         }
+    }
+
+    private func markCompleteAndAdvance() {
+        if !isCompleted {
+            isCompleted = true
+            authViewModel.markChapterRead(bookId: bookId, chapter: chapterInt, verse: 0)
+        }
+        nextChapter()
     }
 }
 
@@ -196,5 +262,54 @@ extension Verse {
         } else {
             return stripped
         }
+    }
+}
+
+// MARK: - Complete Chapter Toggle
+struct CompleteChapterToggle: View {
+    @Binding var isCompleted: Bool
+    let onToggle: (Bool) -> Void
+    let onSwipeComplete: () -> Void
+
+    @State private var dragOffset: CGFloat = 0
+
+    var body: some View {
+        Toggle(isOn: Binding(
+            get: { isCompleted },
+            set: { newVal in
+                isCompleted = newVal
+                onToggle(newVal)
+            }
+        )) {
+            Text(isCompleted ? "Chapter Completed" : "Mark Chapter Complete")
+                .font(.headline)
+                .frame(maxWidth: .infinity, alignment: .center)
+        }
+        .padding()
+        .background(
+            ZStack(alignment: .leading) {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.green.opacity(0.15))
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.green.opacity(0.4))
+                    .frame(width: dragOffset)
+            }
+        )
+        .gesture(
+            DragGesture()
+                .onChanged { value in
+                    dragOffset = max(0, value.translation.width)
+                }
+                .onEnded { _ in
+                    if dragOffset > 80 {
+                        if !isCompleted {
+                            isCompleted = true
+                            onToggle(true)
+                        }
+                        onSwipeComplete()
+                    }
+                    dragOffset = 0
+                }
+        )
     }
 }
