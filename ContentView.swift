@@ -7,8 +7,10 @@ struct ContentView: View {
             TabView {
                 // "Books" tab: the main Bible navigation/reading UI
                 NavigationView {
-                    VStack(spacing: 0) {
-                        OverviewView()
+                    NavigationStack {
+                        VStack(spacing: 0) {
+                            OverviewView()
+                        }
                     }
                 }
                 .tabItem {
