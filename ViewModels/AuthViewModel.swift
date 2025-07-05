@@ -1,12 +1,12 @@
 import Foundation
 import FirebaseAuth
-import FirebaseFirestore
 import GoogleSignIn
 
 class AuthViewModel: ObservableObject {
     @Published var user: User?
     @Published var isLoading: Bool = true
     @Published var error: Error?
+    @Published var profile = UserProfile()
 
     private var signInRetries = 0
 
@@ -37,6 +37,7 @@ class AuthViewModel: ObservableObject {
         } else {
             self.user = Auth.auth().currentUser
             self.isLoading = false
+            if let uid = self.user?.uid { self.loadProfile(uid: uid) }
         }
     }
 
@@ -62,6 +63,7 @@ class AuthViewModel: ObservableObject {
                 } else {
                     self?.isLoading = false
                     self?.user = result?.user
+                    if let uid = result?.user.uid { self?.loadProfile(uid: uid) }
                 }
             }
         }
@@ -110,8 +112,26 @@ class AuthViewModel: ObservableObject {
         }
     }
 
-    func saveProgress(_ progress: [String: Any]) {
+    private func loadProfile(uid: String) {
+        dataStore.loadProfile(uid: uid) { profile, _ in
+            DispatchQueue.main.async { [weak self] in
+                self?.profile = profile ?? UserProfile()
+            }
+        }
+    }
+
+    func saveProfile() {
         guard let uid = user?.uid else { return }
-        dataStore.saveProgress(progress, uid: uid, completion: nil)
+        dataStore.saveProfile(profile, uid: uid, completion: nil)
+    }
+
+    func markChapterRead(bookId: String, chapter: Int, verse: Int) {
+        var set = Set(profile.chaptersRead[bookId] ?? [])
+        if !set.contains(chapter) {
+            set.insert(chapter)
+            profile.chaptersRead[bookId] = Array(set).sorted()
+        }
+        profile.lastRead[bookId] = ["chapter": chapter, "verse": verse]
+        saveProfile()
     }
 }

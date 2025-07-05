@@ -4,6 +4,8 @@ struct ChapterView: View {
     let chapterId: String        // e.g. "GEN.1"
     let bibleId: String          // e.g. "179568874c45066f-01"
     let highlightVerse: Int?
+
+    @EnvironmentObject var authViewModel: AuthViewModel
     
     @State private var verses: [Verse] = []
     @State private var error: String?
@@ -17,6 +19,14 @@ struct ChapterView: View {
     }
     var chapterNumber: String {
         chapterId.components(separatedBy: ".").last ?? ""
+    }
+
+    var chapterInt: Int {
+        Int(chapterNumber) ?? 1
+    }
+
+    var bookId: String {
+        chapterId.components(separatedBy: ".").first ?? ""
     }
     
     var body: some View {
@@ -123,6 +133,7 @@ struct ChapterView: View {
         group.notify(queue: .main) {
             self.verses = loadedVerses
             self.isLoading = false
+            authViewModel.markChapterRead(bookId: bookId, chapter: chapterInt, verse: highlightVerse ?? 0)
         }
     }
 

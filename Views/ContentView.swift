@@ -5,6 +5,13 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             TabView {
+                // Home tab
+                HomeView()
+                    .tabItem {
+                        Image(systemName: "house")
+                        Text("Home")
+                    }
+
                 // "Books" tab: the main Bible navigation/reading UI
                 NavigationView {
                     NavigationStack {
@@ -16,15 +23,6 @@ struct ContentView: View {
                 .tabItem {
                     Image(systemName: "book.closed")
                     Text("Books")
-                }
-
-                // Settings tab
-                NavigationView {
-                    SettingsView()
-                }
-                .tabItem {
-                    Image(systemName: "gear")
-                    Text("Settings")
                 }
             }
         }
