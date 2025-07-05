@@ -23,5 +23,8 @@ struct RootView: View {
                 }
             }
         }
+        .task {
+            authViewModel.start()
+        }
     }
 }
