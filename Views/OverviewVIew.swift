@@ -274,7 +274,6 @@ struct OverviewView: View {
                     // Main Bible Overview
                     ScrollViewReader { proxy in
                         List {
-
                         TestamentSection(
                             title: "Old Testament",
                             categories: oldTestamentCategories,
