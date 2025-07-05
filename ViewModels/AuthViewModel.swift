@@ -156,8 +156,21 @@ class AuthViewModel: ObservableObject {
         saveProfile()
     }
 
-    func setContinuityBookmark(bookId: String, chapter: Int, verse: Int) {
-        profile.continuityBookmark = "\(bookId).\(chapter).\(verse)"
-        saveProfile()
+    func addBookmark(_ verseId: String) {
+        if !profile.bookmarks.contains(verseId) {
+            profile.bookmarks.append(verseId)
+            saveProfile()
+        }
+    }
+
+    func removeBookmark(_ verseId: String) {
+        if let idx = profile.bookmarks.firstIndex(of: verseId) {
+            profile.bookmarks.remove(at: idx)
+            saveProfile()
+        }
+    }
+
+    func isBookmarked(_ verseId: String) -> Bool {
+        profile.bookmarks.contains(verseId)
     }
 }

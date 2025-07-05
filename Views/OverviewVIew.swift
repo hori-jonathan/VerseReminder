@@ -249,6 +249,7 @@ struct OverviewView: View {
     @State private var selectedChapter: (book: BibleBook, chapter: Int, verse: Int?)? = nil
     @State private var selectedExpandedBook: BibleBook? = nil
     @State private var scrollTargetBookId: String? = nil
+    @State private var showBookmarks = false
 
     var body: some View {
         // Map the user profile arrays into sets for quick lookup
@@ -378,6 +379,16 @@ struct OverviewView: View {
         }
         .navigationTitle("Books")
         .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: { showBookmarks = true }) {
+                    Image(systemName: "bookmark")
+                }
+            }
+        }
+        .sheet(isPresented: $showBookmarks) {
+            BookmarksView()
+        }
     }
     
     private func handleSearchResultSelection(_ result: BibleSearchResult) {
@@ -669,7 +680,8 @@ struct CategorySection: View {
                     chaptersBookmarked: chaptersBookmarked[book.id] ?? [],
                     lastRead: lastRead[book.id],
                     onContinue: {
-                        let next = lastRead[book.id]?.chapter ?? 1
+                        let read = chaptersRead[book.id] ?? []
+                        let next = (1...book.chapters).first { !read.contains($0) } ?? book.chapters
                         onSelectChapter(book, next)
                     },
                     onExpandBook: { onExpandBook(book) },

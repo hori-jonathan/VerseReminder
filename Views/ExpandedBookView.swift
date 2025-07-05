@@ -13,6 +13,7 @@ struct ExpandedBookView: View {
 
     @State private var selectedChapter: (book: BibleBook, chapter: Int, verse: Int?)? = nil
     @State private var selectedBook: BibleBook? = nil
+    @State private var showBookmarks = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -113,10 +114,18 @@ struct ExpandedBookView: View {
                 }
             }
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: backToBooks) {
-                    Image(systemName: "book.closed")
+                HStack {
+                    Button(action: { showBookmarks = true }) {
+                        Image(systemName: "bookmark")
+                    }
+                    Button(action: backToBooks) {
+                        Image(systemName: "book.closed")
+                    }
                 }
             }
+        }
+        .sheet(isPresented: $showBookmarks) {
+            BookmarksView()
         }
     }
 

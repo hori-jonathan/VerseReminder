@@ -17,6 +17,7 @@ struct ChapterView: View {
     @State private var navigateToNext: (bookId: String, chapter: Int)? = nil
     @State private var navigateToBook: BibleBook? = nil
     @StateObject private var searchManager = BibleSearchManager()
+    @State private var showBookmarks = false
 
     // Heading components
     var bookName: String {
@@ -129,8 +130,13 @@ struct ChapterView: View {
                 }
             }
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: backToBooks) {
-                    Image(systemName: "book.closed")
+                HStack {
+                    Button(action: { showBookmarks = true }) {
+                        Image(systemName: "bookmark")
+                    }
+                    Button(action: backToBooks) {
+                        Image(systemName: "book.closed")
+                    }
                 }
             }
         }
@@ -168,6 +174,10 @@ struct ChapterView: View {
                 set: { if !$0 { navigateToBook = nil } }
             )
         ) { EmptyView() }
+
+        .sheet(isPresented: $showBookmarks) {
+            BookmarksView()
+        }
     }
     
     // MARK: - Previous/Next chapter navigation
@@ -286,7 +296,7 @@ struct VerseRowView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
 
     var isBookmarked: Bool {
-        authViewModel.profile.continuityBookmark == verse.id
+        authViewModel.isBookmarked(verse.id)
     }
 
     var body: some View {
@@ -312,12 +322,13 @@ struct VerseRowView: View {
         .cornerRadius(6)
         .animation(.easeInOut(duration: 0.3), value: isHighlighted)
         .contextMenu {
-            Button("Set Continuity Bookmark") {
-                let parts = verse.id.split(separator: ".")
-                if parts.count >= 3,
-                   let chapter = Int(parts[1]),
-                   let verseNum = Int(parts[2]) {
-                    authViewModel.setContinuityBookmark(bookId: String(parts[0]), chapter: chapter, verse: verseNum)
+            if isBookmarked {
+                Button("Remove Bookmark") {
+                    authViewModel.removeBookmark(verse.id)
+                }
+            } else {
+                Button("Add Bookmark") {
+                    authViewModel.addBookmark(verse.id)
                 }
             }
         }

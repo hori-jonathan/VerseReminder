@@ -5,20 +5,20 @@ struct UserProfile {
     var chaptersBookmarked: [String: [Int]]
     var lastRead: [String: [String: Int]]
     var readingPlan: ReadingPlan?
-    var continuityBookmark: String?
+    var bookmarks: [String]
     var lastReadBookId: String?
 
     init(chaptersRead: [String: [Int]] = [:],
          chaptersBookmarked: [String: [Int]] = [:],
          lastRead: [String: [String: Int]] = [:],
          readingPlan: ReadingPlan? = nil,
-         continuityBookmark: String? = nil,
+         bookmarks: [String] = [],
          lastReadBookId: String? = nil) {
         self.chaptersRead = chaptersRead
         self.chaptersBookmarked = chaptersBookmarked
         self.lastRead = lastRead
         self.readingPlan = readingPlan
-        self.continuityBookmark = continuityBookmark
+        self.bookmarks = bookmarks
         self.lastReadBookId = lastReadBookId
     }
 }
@@ -32,22 +32,20 @@ extension UserProfile {
         if let planData = dict["readingPlan"] as? [String: Any] {
             plan = ReadingPlan(dict: planData)
         }
-        let bookmark = dict["continuityBookmark"] as? String
+        let bookmarks = dict["bookmarks"] as? [String] ?? []
         let lastBook = dict["lastReadBookId"] as? String
-        self.init(chaptersRead: chaptersRead, chaptersBookmarked: chaptersBookmarked, lastRead: lastRead, readingPlan: plan, continuityBookmark: bookmark, lastReadBookId: lastBook)
+        self.init(chaptersRead: chaptersRead, chaptersBookmarked: chaptersBookmarked, lastRead: lastRead, readingPlan: plan, bookmarks: bookmarks, lastReadBookId: lastBook)
     }
 
     var dictionary: [String: Any] {
         var dict: [String: Any] = [
             "chaptersRead": chaptersRead,
             "chaptersBookmarked": chaptersBookmarked,
-            "lastRead": lastRead
+            "lastRead": lastRead,
+            "bookmarks": bookmarks
         ]
         if let plan = readingPlan {
             dict["readingPlan"] = plan.dictionary
-        }
-        if let bm = continuityBookmark {
-            dict["continuityBookmark"] = bm
         }
         if let lastBook = lastReadBookId {
             dict["lastReadBookId"] = lastBook

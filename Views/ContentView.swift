@@ -26,6 +26,12 @@ struct ContentView: View {
                     Image(systemName: "book.closed")
                     Text("Books")
                 }
+
+                BookmarksView()
+                    .tabItem {
+                        Image(systemName: "bookmark")
+                        Text("Bookmarks")
+                    }
             }
         }
     }

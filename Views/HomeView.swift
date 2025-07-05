@@ -7,37 +7,43 @@ struct HomeView: View {
 
     var body: some View {
         NavigationView {
-            VStack(alignment: .leading, spacing: 20) {
-                if let plan = authViewModel.profile.readingPlan {
-                    Text("Total chapters read: \(authViewModel.profile.totalChaptersRead)")
-                        .font(.headline)
-                    Text("Plan: \(plan.chaptersPerWeek) chapters/week")
-                        .foregroundColor(.secondary)
-                    Text("Estimated completion: \(plan.estimatedCompletion, style: .date)")
-                        .font(.caption)
-                    if let last = lastReadReference() {
-                        NavigationLink(destination: ChapterView(chapterId: last.ref, bibleId: defaultBibleId, highlightVerse: last.verse)) {
-                            Text("Continue Reading")
-                                .frame(maxWidth: .infinity)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    if let plan = authViewModel.profile.readingPlan {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Weekly Goal: \(plan.chaptersPerWeek) chapters")
+                                .font(.title3).bold()
+                            ProgressView(value: Double(authViewModel.profile.totalChaptersRead), total: 1189)
+                                .accentColor(.green)
+                            Text("Estimated completion: \(plan.estimatedCompletion, style: .date)")
+                                .font(.footnote)
+                        }
+
+                        if let last = lastReadReference() {
+                            NavigationLink(destination: ChapterView(chapterId: last.ref, bibleId: defaultBibleId, highlightVerse: last.verse)) {
+                                Text("Continue Reading")
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Color.green)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(12)
+                            }
+                        }
+                    } else {
+                        VStack(spacing: 16) {
+                            Text("No reading plan yet")
+                                .font(.title2)
+                            Button("Create Plan") { showPlanCreator = true }
                                 .padding()
-                                .background(Color.green)
+                                .background(Color.blue)
                                 .foregroundColor(.white)
-                                .cornerRadius(8)
+                                .cornerRadius(12)
                         }
                     }
-                } else {
-                    VStack(spacing: 12) {
-                        Text("No reading plan yet")
-                        Button("Create Plan") { showPlanCreator = true }
-                            .padding()
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
-                    }
+                    Spacer()
                 }
-                Spacer()
+                .padding()
             }
-            .padding()
             .navigationTitle("Home")
             .sheet(isPresented: $showPlanCreator) {
                 NavigationView { PlanCreatorView() }
@@ -46,9 +52,13 @@ struct HomeView: View {
     }
 
     private func lastReadReference() -> (ref: String, verse: Int)? {
-        guard let book = authViewModel.profile.lastReadBookId,
-              let info = authViewModel.profile.lastRead[book] else { return nil }
-        let ref = "\(book).\(info["chapter"] ?? 1)"
-        return (ref, info["verse"] ?? 0)
+        let all = (oldTestamentCategories + newTestamentCategories).flatMap { $0.books }.sorted { $0.order < $1.order }
+        for book in all {
+            let read = Set(authViewModel.profile.chaptersRead[book.id] ?? [])
+            if let chapter = (1...book.chapters).first(where: { !read.contains($0) }) {
+                return ("\(book.id).\(chapter)", 0)
+            }
+        }
+        return nil
     }
 }
