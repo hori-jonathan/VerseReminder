@@ -101,14 +101,27 @@ class BibleAPI {
 // MARK: - HTML Stripping Extension
 extension String {
     func stripHTML() -> String {
-        guard let data = self.data(using: .utf16) else { return self }
-        let options: [NSAttributedString.DocumentReadingOptionKey: Any] = [
-            .documentType: NSAttributedString.DocumentType.html,
-            .characterEncoding: String.Encoding.utf16.rawValue
+        // Using NSAttributedString can crash when the markup is malformed.
+        // Instead rely entirely on a regex pass to remove tags and then decode
+        // a handful of common HTML entities. This avoids any unexpected
+        // Objective-C exceptions while still returning readable text.
+
+        let regex = try? NSRegularExpression(pattern: "<[^>]+>", options: .caseInsensitive)
+        let range = NSRange(location: 0, length: self.utf16.count)
+        var stripped = regex?.stringByReplacingMatches(in: self, options: [], range: range, withTemplate: "") ?? self
+
+        // Decode some basic HTML entities the API commonly returns
+        let entities: [String: String] = [
+            "&quot;": "\"",
+            "&apos;": "'",
+            "&amp;": "&",
+            "&lt;": "<",
+            "&gt;": ">",
+            "&nbsp;": " "
         ]
-        if let attr = try? NSAttributedString(data: data, options: options, documentAttributes: nil) {
-            return attr.string
+        for (entity, replacement) in entities {
+            stripped = stripped.replacingOccurrences(of: entity, with: replacement)
         }
-        return self
+        return stripped
     }
 }
