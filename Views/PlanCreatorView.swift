@@ -31,7 +31,6 @@ struct PlanCreatorView: View {
         _readingDays = State(initialValue: Set(existingPlan?.readingDays ?? ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]))
         _allowNonLinear = State(initialValue: existingPlan?.allowNonLinear ?? false)
     }
-
     private let allDays = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
 
     var estimatedCompletion: Date {
