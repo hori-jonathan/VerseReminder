@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var booksNavigationManager = BooksNavigationManager()
 
     var body: some View {
         ZStack {
@@ -19,6 +20,7 @@ struct ContentView: View {
                             OverviewView()
                         }
                     }
+                    .environmentObject(booksNavigationManager)
                 }
                 .tabItem {
                     Image(systemName: "book.closed")

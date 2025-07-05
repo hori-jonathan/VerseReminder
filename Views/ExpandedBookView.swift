@@ -8,6 +8,7 @@ struct ExpandedBookView: View {
     let lastRead: [String: (chapter: Int, verse: Int)]
     let onSelectChapter: (BibleBook, Int) -> Void
 
+    @EnvironmentObject var booksNav: BooksNavigationManager
     @Environment(\.dismiss) private var dismiss
 
     @State private var selectedChapter: (book: BibleBook, chapter: Int, verse: Int?)? = nil
@@ -92,6 +93,9 @@ struct ExpandedBookView: View {
             ) { EmptyView() }
         }
         .onAppear { searchManager.scopeBook = book }
+        .onReceive(booksNav.$resetTrigger) { _ in
+            dismiss()
+        }
         .onDisappear {
             searchManager.scopeBook = nil
             searchManager.clearSearch()
@@ -101,11 +105,16 @@ struct ExpandedBookView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
-                Button(action: backToBooks) {
+                Button(action: { dismiss() }) {
                     HStack {
                         Image(systemName: "chevron.backward")
-                        Text("Books")
+                        Text("Back")
                     }
+                }
+            }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: backToBooks) {
+                    Image(systemName: "book.closed")
                 }
             }
         }
@@ -129,8 +138,7 @@ struct ExpandedBookView: View {
     }
 
     private func backToBooks() {
-        dismiss()
-        DispatchQueue.main.async { dismiss() }
+        booksNav.popToRoot()
     }
 }
 
