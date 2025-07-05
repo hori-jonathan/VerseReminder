@@ -1,6 +1,7 @@
 import Foundation
 import FirebaseAuth
 import FirebaseFirestore
+import GoogleSignIn
 
 class AuthViewModel: ObservableObject {
     @Published var user: User?
@@ -52,13 +53,13 @@ class AuthViewModel: ObservableObject {
                 completion(error)
                 return
             }
-            guard let token = result?.user.idToken?.tokenString,
-                  let accessToken = result?.user.accessToken
+            guard let idToken = result?.user.idToken?.tokenString,
+                  let accessToken = result?.user.accessToken.tokenString
             else {
                 completion(NSError(domain: "Auth", code: -1, userInfo: [NSLocalizedDescriptionKey: "Missing token"]))
                 return
             }
-            let credential = GoogleAuthProvider.credential(withIDToken: token, accessToken: accessToken)
+            let credential = GoogleAuthProvider.credential(withIDToken: idToken, accessToken: accessToken)
             self.link(with: credential, completion: completion)
         }
     }
