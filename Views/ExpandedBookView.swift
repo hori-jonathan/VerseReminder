@@ -13,6 +13,7 @@ struct ExpandedBookView: View {
 
     @State private var selectedChapter: (book: BibleBook, chapter: Int, verse: Int?)? = nil
     @State private var selectedBook: BibleBook? = nil
+    @State private var hasReceivedTrigger = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -93,8 +94,12 @@ struct ExpandedBookView: View {
             ) { EmptyView() }
         }
         .onAppear { searchManager.scopeBook = book }
-        .onReceive(booksNav.$resetTrigger.dropFirst()) { _ in
-            dismiss()
+        .onReceive(booksNav.$resetTrigger) { _ in
+            if hasReceivedTrigger {
+                dismiss()
+            } else {
+                hasReceivedTrigger = true
+            }
         }
         .onDisappear {
             searchManager.scopeBook = nil
