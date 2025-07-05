@@ -8,9 +8,11 @@ class BooksNavigationManager: ObservableObject {
     @Published private(set) var resetTrigger: Int = 0
 
     /// Call to trigger a pop-to-root of all active views in the Books stack.
+    ///
+    /// Simply incrementing the trigger causes all subscribed views to
+    /// dismiss themselves if the value differs from the one they observed on
+    /// creation. This lets every active panel close simultaneously.
     func popToRoot() {
-        // Increment the trigger which will be observed by each view
-        // and cause it to call `dismiss()`.
         resetTrigger += 1
     }
 }
