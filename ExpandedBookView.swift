@@ -96,6 +96,9 @@ struct ExpandedBookView: View {
     private func handleSearchResult(_ result: BibleSearchResult) {
         switch result.type {
         case .book:
+            // When selecting another book, clear any pending chapter
+            // navigation to prevent unintended pushes
+            selectedChapter = nil
             selectedBook = result.book
             searchManager.clearSearch()
         case .chapter:
