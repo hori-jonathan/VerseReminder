@@ -117,11 +117,16 @@ struct ChapterView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
-                Button(action: backToBooks) {
+                Button(action: { dismiss() }) {
                     HStack {
                         Image(systemName: "chevron.backward")
-                        Text("Books")
+                        Text("Back")
                     }
+                }
+            }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: backToBooks) {
+                    Image(systemName: "book.closed")
                 }
             }
         }
