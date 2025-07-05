@@ -283,12 +283,27 @@ struct ChapterView: View {
 struct VerseRowView: View {
     let verse: Verse
     let isHighlighted: Bool
+    @EnvironmentObject var authViewModel: AuthViewModel
+
+    var isBookmarked: Bool {
+        authViewModel.profile.continuityBookmark == verse.id
+    }
+
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
-            Text(verse.verseNumber)
-                .bold()
-                .frame(width: 26, alignment: .trailing)
-                .foregroundColor(.secondary)
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(verse.verseNumber)
+                    .bold()
+                    .frame(width: 26, alignment: .trailing)
+                    .foregroundColor(.secondary)
+                if isBookmarked {
+                    Image(systemName: "bookmark.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 10, height: 10)
+                        .foregroundColor(.blue)
+                }
+            }
             Text(verse.cleanedText)
         }
         .padding(.vertical, 2)
@@ -296,6 +311,16 @@ struct VerseRowView: View {
         .background(isHighlighted ? Color.yellow.opacity(0.3) : Color.clear)
         .cornerRadius(6)
         .animation(.easeInOut(duration: 0.3), value: isHighlighted)
+        .contextMenu {
+            Button("Set Continuity Bookmark") {
+                let parts = verse.id.split(separator: ".")
+                if parts.count >= 3,
+                   let chapter = Int(parts[1]),
+                   let verseNum = Int(parts[2]) {
+                    authViewModel.setContinuityBookmark(bookId: String(parts[0]), chapter: chapter, verse: verseNum)
+                }
+            }
+        }
     }
 }
 
