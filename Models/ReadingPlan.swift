@@ -3,8 +3,12 @@ import Foundation
 
 struct ReadingPlan: Codable {
     var startDate: Date
-    var chaptersPerWeek: Int
+    var dailyChapters: [String: Int]
     var notificationsEnabled: Bool
+
+    var chaptersPerWeek: Int {
+        dailyChapters.values.reduce(0, +)
+    }
 
     var estimatedCompletion: Date {
         // 1189 chapters in the Bible
@@ -14,17 +18,27 @@ struct ReadingPlan: Codable {
 }
 
 extension ReadingPlan {
+    init(startDate: Date = Date(), dailyChapters: [String: Int] = [:], notificationsEnabled: Bool = false) {
+        self.startDate = startDate
+        self.dailyChapters = dailyChapters
+        self.notificationsEnabled = notificationsEnabled
+    }
+
     init?(dict: [String: Any]) {
         guard let timestamp = dict["startDate"] as? Timestamp else { return nil }
         startDate = timestamp.dateValue()
-        chaptersPerWeek = dict["chaptersPerWeek"] as? Int ?? 1
+        dailyChapters = dict["dailyChapters"] as? [String: Int] ?? [:]
+        if dailyChapters.isEmpty {
+            let perWeek = dict["chaptersPerWeek"] as? Int ?? 1
+            dailyChapters = ["Mon": perWeek]
+        }
         notificationsEnabled = dict["notificationsEnabled"] as? Bool ?? false
     }
 
     var dictionary: [String: Any] {
         [
             "startDate": Timestamp(date: startDate),
-            "chaptersPerWeek": chaptersPerWeek,
+            "dailyChapters": dailyChapters,
             "notificationsEnabled": notificationsEnabled
         ]
     }
