@@ -156,6 +156,12 @@ class AuthViewModel: ObservableObject {
         saveProfile()
     }
 
+    /// Remove the user's reading plan entirely.
+    func deleteReadingPlan() {
+        profile.readingPlan = nil
+        saveProfile()
+    }
+
     func addBookmark(_ verseId: String) {
         if !profile.bookmarks.contains(verseId) {
             profile.bookmarks.append(verseId)

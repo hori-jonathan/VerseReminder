@@ -4,6 +4,7 @@ struct HomeView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
 
     @State private var showPlanCreator = false
+    @State private var editingPlan: ReadingPlan? = nil
 
     var body: some View {
         NavigationView {
@@ -11,13 +12,35 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 24) {
                     if let plan = authViewModel.profile.readingPlan {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Weekly Goal: \(plan.chaptersPerWeek) chapters")
+                            Text(plan.name)
                                 .font(.title3).bold()
-                            ProgressView(value: Double(authViewModel.profile.totalChaptersRead), total: 1189)
-                                .accentColor(.green)
-                            Text("Estimated completion: \(plan.estimatedCompletion, style: .date)")
-                                .font(.footnote)
+
+                            switch plan.goalType {
+                            case .chaptersPerDay:
+                                let amount = plan.chaptersPerDay ?? 1
+                                Text("Goal: \(amount) chapters per day")
+                                    .font(.subheadline)
+                            case .finishByDate:
+                                if let end = plan.finishBy {
+                                    Text("Finish by \(end, style: .date)")
+                                        .font(.subheadline)
+                                }
+                            case .flexible:
+                                Text("Flexible pace")
+                                    .font(.subheadline)
+                            }
+
+                        ProgressView(value: Double(authViewModel.profile.totalChaptersRead), total: 1189)
+                            .accentColor(.green)
+                        Text("Estimated completion: \(plan.estimatedCompletion, style: .date)")
+                            .font(.footnote)
+                        Button("Edit Plan") {
+                            editingPlan = plan
                         }
+                        .font(.subheadline)
+                        .foregroundColor(.blue)
+                        .padding(.top, 4)
+                    }
 
                         if let last = lastReadReference() {
                             NavigationLink(destination: ChapterView(chapterId: last.ref, bibleId: defaultBibleId, highlightVerse: last.verse)) {
@@ -47,6 +70,9 @@ struct HomeView: View {
             .navigationTitle("Home")
             .sheet(isPresented: $showPlanCreator) {
                 NavigationView { PlanCreatorView() }
+            }
+            .sheet(item: $editingPlan) { plan in
+                NavigationView { PlanCreatorView(existingPlan: plan) }
             }
         }
     }
