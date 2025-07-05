@@ -11,7 +11,13 @@ struct RootView: View {
             } else if authViewModel.user != nil {
                 ContentView()
             } else {
-                Text("Unable to sign in")
+                VStack {
+                    Text("Unable to sign in")
+                    if let error = authViewModel.error {
+                        Text(error.localizedDescription)
+                            .foregroundColor(.red)
+                    }
+                }
             }
         }
     }
