@@ -6,6 +6,7 @@ struct ChapterView: View {
     let highlightVerse: Int?
 
     @EnvironmentObject var authViewModel: AuthViewModel
+    @Environment(\.dismiss) private var dismiss
     
     @State private var verses: [Verse] = []
     @State private var error: String?
@@ -108,6 +109,17 @@ struct ChapterView: View {
             }
         }
         .onAppear(perform: loadChapter)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button(action: backToBooks) {
+                    HStack {
+                        Image(systemName: "chevron.backward")
+                        Text("Books")
+                    }
+                }
+            }
+        }
 
         NavigationLink(
             destination: navigateToNext.map {
@@ -220,6 +232,11 @@ struct ChapterView: View {
         }
         nextChapter()
     }
+
+    private func backToBooks() {
+        dismiss()
+        DispatchQueue.main.async { dismiss() }
+    }
 }
 
 // MARK: - VerseRowView
@@ -273,43 +290,56 @@ struct CompleteChapterToggle: View {
 
     @State private var dragOffset: CGFloat = 0
 
+    private let height: CGFloat = 44
+
     var body: some View {
-        Toggle(isOn: Binding(
-            get: { isCompleted },
-            set: { newVal in
-                isCompleted = newVal
-                onToggle(newVal)
+        GeometryReader { geo in
+            ZStack {
+                Capsule()
+                    .stroke(Color.black, lineWidth: 1)
+                    .background(
+                        Capsule()
+                            .fill(isCompleted ? Color.black : Color.clear)
+                    )
+
+                Text(isCompleted ? "Completed" : "Complete Chapter")
+                    .foregroundColor(isCompleted ? .white : .black)
+                    .frame(maxWidth: .infinity)
+
+                Circle()
+                    .fill(Color.black)
+                    .frame(width: height - 8, height: height - 8)
+                    .offset(x: dragOffset - (geo.size.width / 2 - height / 2))
+                    .gesture(
+                        DragGesture()
+                            .onChanged { value in
+                                dragOffset = max(0, min(value.translation.width, geo.size.width - height))
+                            }
+                            .onEnded { _ in
+                                if dragOffset > geo.size.width * 0.65 {
+                                    if !isCompleted {
+                                        isCompleted = true
+                                        onToggle(true)
+                                    }
+                                    onSwipeComplete()
+                                } else if dragOffset > geo.size.width * 0.1 {
+                                    isCompleted.toggle()
+                                    onToggle(isCompleted)
+                                }
+                                dragOffset = 0
+                            }
+                    )
+                    .overlay(
+                        Image(systemName: isCompleted ? "checkmark" : "chevron.right")
+                            .foregroundColor(.white)
+                    )
             }
-        )) {
-            Text(isCompleted ? "Chapter Completed" : "Mark Chapter Complete")
-                .font(.headline)
-                .frame(maxWidth: .infinity, alignment: .center)
+            .frame(height: height)
         }
-        .padding()
-        .background(
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.green.opacity(0.15))
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.green.opacity(0.4))
-                    .frame(width: dragOffset)
-            }
-        )
-        .gesture(
-            DragGesture()
-                .onChanged { value in
-                    dragOffset = max(0, value.translation.width)
-                }
-                .onEnded { _ in
-                    if dragOffset > 80 {
-                        if !isCompleted {
-                            isCompleted = true
-                            onToggle(true)
-                        }
-                        onSwipeComplete()
-                    }
-                    dragOffset = 0
-                }
-        )
+        .frame(height: height)
+        .onTapGesture {
+            isCompleted.toggle()
+            onToggle(isCompleted)
+        }
     }
 }
