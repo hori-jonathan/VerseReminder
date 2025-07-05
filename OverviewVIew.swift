@@ -723,6 +723,7 @@ struct BookDropdownCell: View {
                                         .background(Color.green)
                                         .cornerRadius(8)
                                     }
+                                    .buttonStyle(PlainButtonStyle())
                                     Button(action: onExpandBook) {
                                         Image(systemName: "arrow.up.left.and.arrow.down.right")
                                             .font(.subheadline.weight(.semibold))
@@ -731,6 +732,7 @@ struct BookDropdownCell: View {
                                             .background(Color.purple)
                                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                                     }
+                                    .buttonStyle(PlainButtonStyle())
                                 }
                                 .padding(.top, 2)
                             }
