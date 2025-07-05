@@ -15,6 +15,10 @@ class AuthViewModel: ObservableObject {
         listener = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             self?.user = user
         }
+    }
+
+    /// Call this after Firebase has been configured to begin authentication.
+    func start() {
         signInAnonymouslyIfNeeded()
     }
 
@@ -32,6 +36,12 @@ class AuthViewModel: ObservableObject {
                     self?.isLoading = false
                     if let error = error {
                         self?.error = error
+                        let nsError = error as NSError
+                        print("Anonymous sign-in failed:", nsError, nsError.userInfo)
+                        if nsError.code == AuthErrorCode.internalError.rawValue,
+                           let underlying = nsError.userInfo[NSUnderlyingErrorKey] {
+                            print("Underlying error:", underlying)
+                        }
                     } else {
                         self?.user = result?.user
                     }
