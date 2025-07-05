@@ -8,6 +8,9 @@ The app automatically signs users in anonymously with Firebase on first launch.
 Progress is stored in Firestore under the user's UID. The Settings tab lets
 anonymous users link their account to Google or email using Firebase's `link`
 API so progress can be synced across devices.
+If the initial sign‑in fails due to a transient network error, the app will
+automatically retry a few times and provide a "Retry" button so you can manually
+attempt again.
 
 ## Features
 
