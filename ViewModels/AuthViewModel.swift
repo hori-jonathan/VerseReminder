@@ -132,11 +132,13 @@ class AuthViewModel: ObservableObject {
             profile.chaptersRead[bookId] = Array(set).sorted()
         }
         profile.lastRead[bookId] = ["chapter": chapter, "verse": verse]
+        profile.lastReadBookId = bookId
         saveProfile()
     }
 
     func updateLastRead(bookId: String, chapter: Int, verse: Int) {
         profile.lastRead[bookId] = ["chapter": chapter, "verse": verse]
+        profile.lastReadBookId = bookId
         saveProfile()
     }
 
@@ -147,5 +149,15 @@ class AuthViewModel: ObservableObject {
             profile.chaptersRead[bookId] = Array(set).sorted()
             saveProfile()
         }
+    }
+
+    func setReadingPlan(_ plan: ReadingPlan) {
+        profile.readingPlan = plan
+        saveProfile()
+    }
+
+    func setContinuityBookmark(bookId: String, chapter: Int, verse: Int) {
+        profile.continuityBookmark = "\(bookId).\(chapter).\(verse)"
+        saveProfile()
     }
 }
