@@ -114,7 +114,7 @@ struct ChapterView: View {
                 }
             }
         }
-        .onAppear(perform: loadChapte
+        .onAppear(perform: loadChapter)
         .onReceive(booksNav.$resetTrigger.dropFirst()) { _ in
             dismiss()
         }
