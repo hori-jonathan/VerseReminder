@@ -7,6 +7,8 @@ class AuthViewModel: ObservableObject {
     @Published var isLoading: Bool = true
     @Published var error: Error?
     @Published var profile = UserProfile()
+    /// Published celebration event used to trigger visual effects.
+    @Published var celebrationEvent: CelebrationEvent?
 
     private var signInRetries = 0
 
@@ -127,7 +129,8 @@ class AuthViewModel: ObservableObject {
 
     func markChapterRead(bookId: String, chapter: Int, verse: Int) {
         var set = Set(profile.chaptersRead[bookId] ?? [])
-        if !set.contains(chapter) {
+        let wasNew = !set.contains(chapter)
+        if wasNew {
             set.insert(chapter)
             profile.chaptersRead[bookId] = Array(set).sorted()
             let key = Date().isoDateString
@@ -136,6 +139,10 @@ class AuthViewModel: ObservableObject {
         profile.lastRead[bookId] = ["chapter": chapter, "verse": verse]
         profile.lastReadBookId = bookId
         saveProfile()
+
+        if wasNew {
+            triggerCompletionEvents(for: bookId)
+        }
     }
 
     func updateLastRead(bookId: String, chapter: Int, verse: Int) {
@@ -238,5 +245,50 @@ class AuthViewModel: ObservableObject {
     func updateTheme(_ theme: AppTheme) {
         profile.theme = theme
         saveProfile()
+    }
+
+    // MARK: - Celebration helpers
+    /// Trigger manual celebration events for testing.
+    func triggerChapterCelebration() {
+        triggerCelebration(.chapter)
+    }
+
+    func triggerBookCelebration() {
+        let progress = Double(profile.totalChaptersRead) / 1189.0
+        triggerCelebration(.book(progress: progress))
+    }
+
+    func triggerBibleCelebration() {
+        triggerCelebration(.bible)
+    }
+
+    private func triggerCelebration(_ event: CelebrationEvent) {
+        celebrationEvent = event
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
+            if self?.celebrationEvent != nil {
+                self?.celebrationEvent = nil
+            }
+        }
+    }
+
+    private func triggerCompletionEvents(for bookId: String) {
+        let chaptersRead = Set(profile.chaptersRead[bookId] ?? [])
+        let totalChapters = chaptersCount(for: bookId)
+        if chaptersRead.count == totalChapters {
+            if profile.totalChaptersRead == 1189 {
+                triggerCelebration(.bible)
+            } else {
+                let progress = Double(profile.totalChaptersRead) / 1189.0
+                triggerCelebration(.book(progress: progress))
+            }
+        } else {
+            triggerCelebration(.chapter)
+        }
+    }
+
+    private func chaptersCount(for bookId: String) -> Int {
+        (oldTestamentCategories + newTestamentCategories)
+            .flatMap { $0.books }
+            .first { $0.id == bookId }?.chapters ?? 0
     }
 }
