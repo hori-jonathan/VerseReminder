@@ -181,4 +181,36 @@ class AuthViewModel: ObservableObject {
     func isBookmarked(_ verseId: String) -> Bool {
         profile.bookmarks.contains(verseId)
     }
+
+    // MARK: - Notes
+    func chapterNote(for chapterId: String) -> String? {
+        profile.chapterNotes[chapterId]
+    }
+
+    func verseNote(for chapterId: String, verse: Int) -> String? {
+        profile.verseNotes[chapterId]?["\(verse)"]
+    }
+
+    func setChapterNote(_ text: String, chapterId: String) {
+        if text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            profile.chapterNotes.removeValue(forKey: chapterId)
+        } else {
+            profile.chapterNotes[chapterId] = text
+        }
+        saveProfile()
+    }
+
+    func setVerseNote(_ text: String, chapterId: String, verse: Int) {
+        if text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            profile.verseNotes[chapterId]?["\(verse)"] = nil
+            if profile.verseNotes[chapterId]?.isEmpty ?? false {
+                profile.verseNotes.removeValue(forKey: chapterId)
+            }
+        } else {
+            var notes = profile.verseNotes[chapterId] ?? [:]
+            notes["\(verse)"] = text
+            profile.verseNotes[chapterId] = notes
+        }
+        saveProfile()
+    }
 }

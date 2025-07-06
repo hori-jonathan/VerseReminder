@@ -18,6 +18,7 @@ struct ChapterView: View {
     @State private var navigateToBook: BibleBook? = nil
     @StateObject private var searchManager = BibleSearchManager()
     @State private var showBookmarks = false
+    @State private var showChapterNoteEditor = false
 
     // Heading components
     var bookName: String {
@@ -134,6 +135,9 @@ struct ChapterView: View {
                     Button(action: { showBookmarks = true }) {
                         Image(systemName: "bookmark")
                     }
+                    Button(action: { showChapterNoteEditor = true }) {
+                        Image(systemName: "note.text")
+                    }
                     Button(action: backToBooks) {
                         Image(systemName: "book.closed")
                     }
@@ -178,6 +182,14 @@ struct ChapterView: View {
         .sheet(isPresented: $showBookmarks) {
             BookmarksView()
                 .environmentObject(booksNav)
+        }
+        .sheet(isPresented: $showChapterNoteEditor) {
+            NoteEditorView(
+                text: authViewModel.chapterNote(for: chapterId) ?? "",
+                title: "Note for \(bookName) \(chapterNumber)"
+            ) { newText in
+                authViewModel.setChapterNote(newText, chapterId: chapterId)
+            }
         }
     }
     
@@ -295,9 +307,21 @@ struct VerseRowView: View {
     let verse: Verse
     let isHighlighted: Bool
     @EnvironmentObject var authViewModel: AuthViewModel
+    @State private var showNoteEditor = false
+    @State private var noteText = ""
 
     var isBookmarked: Bool {
         authViewModel.isBookmarked(verse.id)
+    }
+
+    var chapterId: String {
+        let parts = verse.id.split(separator: ".")
+        guard parts.count >= 2 else { return verse.id }
+        return parts[0] + "." + parts[1]
+    }
+
+    var existingNote: String? {
+        authViewModel.verseNote(for: chapterId, verse: Int(verse.verseNumber) ?? 0)
     }
 
     var body: some View {
@@ -331,6 +355,23 @@ struct VerseRowView: View {
                 Button("Add Bookmark") {
                     authViewModel.addBookmark(verse.id)
                 }
+            }
+            Button(existingNote == nil ? "Add Note" : "Edit Note") {
+                noteText = existingNote ?? ""
+                showNoteEditor = true
+            }
+            if existingNote != nil {
+                Button("Remove Note") {
+                    authViewModel.setVerseNote("", chapterId: chapterId, verse: Int(verse.verseNumber) ?? 0)
+                }
+            }
+        }
+        .sheet(isPresented: $showNoteEditor) {
+            NoteEditorView(
+                text: noteText,
+                title: "Note for \(verse.reference)"
+            ) { newText in
+                authViewModel.setVerseNote(newText, chapterId: chapterId, verse: Int(verse.verseNumber) ?? 0)
             }
         }
     }
