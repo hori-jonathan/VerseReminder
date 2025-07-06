@@ -27,11 +27,11 @@ struct ContentView: View {
                     Text("Books")
                 }
 
-                BookmarksView()
+                StudyView()
                     .environmentObject(booksNavigationManager)
                     .tabItem {
-                        Image(systemName: "bookmark")
-                        Text("Bookmarks")
+                        Image(systemName: "books.vertical")
+                        Text("Study")
                     }
             }
             .environmentObject(booksNavigationManager)

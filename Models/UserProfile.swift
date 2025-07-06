@@ -9,6 +9,10 @@ struct UserProfile {
     var lastReadBookId: String?
     /// Map of ISO date strings (YYYY-MM-DD) to count of chapters read that day
     var dailyChapterCounts: [String: Int]
+    /// User notes for entire chapters keyed by "BOOK.CHAPTER" ids
+    var chapterNotes: [String: String]
+    /// User notes for individual verses keyed by chapter id then verse number
+    var verseNotes: [String: [String: String]]
 
     init(chaptersRead: [String: [Int]] = [:],
          chaptersBookmarked: [String: [Int]] = [:],
@@ -16,7 +20,9 @@ struct UserProfile {
          readingPlan: ReadingPlan? = nil,
          bookmarks: [String] = [],
          lastReadBookId: String? = nil,
-         dailyChapterCounts: [String: Int] = [:]) {
+         dailyChapterCounts: [String: Int] = [:],
+         chapterNotes: [String: String] = [:],
+         verseNotes: [String: [String: String]] = [:]) {
         self.chaptersRead = chaptersRead
         self.chaptersBookmarked = chaptersBookmarked
         self.lastRead = lastRead
@@ -24,6 +30,8 @@ struct UserProfile {
         self.bookmarks = bookmarks
         self.lastReadBookId = lastReadBookId
         self.dailyChapterCounts = dailyChapterCounts
+        self.chapterNotes = chapterNotes
+        self.verseNotes = verseNotes
     }
 }
 
@@ -39,7 +47,9 @@ extension UserProfile {
         let bookmarks = dict["bookmarks"] as? [String] ?? []
         let lastBook = dict["lastReadBookId"] as? String
         let dailyCounts = dict["dailyChapterCounts"] as? [String: Int] ?? [:]
-        self.init(chaptersRead: chaptersRead, chaptersBookmarked: chaptersBookmarked, lastRead: lastRead, readingPlan: plan, bookmarks: bookmarks, lastReadBookId: lastBook, dailyChapterCounts: dailyCounts)
+        let chapterNotes = dict["chapterNotes"] as? [String: String] ?? [:]
+        let verseNotes = dict["verseNotes"] as? [String: [String: String]] ?? [:]
+        self.init(chaptersRead: chaptersRead, chaptersBookmarked: chaptersBookmarked, lastRead: lastRead, readingPlan: plan, bookmarks: bookmarks, lastReadBookId: lastBook, dailyChapterCounts: dailyCounts, chapterNotes: chapterNotes, verseNotes: verseNotes)
     }
 
     var dictionary: [String: Any] {
@@ -48,7 +58,9 @@ extension UserProfile {
             "chaptersBookmarked": chaptersBookmarked,
             "lastRead": lastRead,
             "bookmarks": bookmarks,
-            "dailyChapterCounts": dailyChapterCounts
+            "dailyChapterCounts": dailyChapterCounts,
+            "chapterNotes": chapterNotes,
+            "verseNotes": verseNotes
         ]
         if let plan = readingPlan {
             dict["readingPlan"] = plan.dictionary
