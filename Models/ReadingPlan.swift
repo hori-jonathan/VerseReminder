@@ -78,6 +78,11 @@ struct ReadingPlan: Codable, Identifiable {
     /// each reading day.
     var chaptersPerDay: Int? = nil
 
+    /// Optional custom chapter amounts for each weekday. Keys use three letter
+    /// abbreviations like "Mon" or "Tue". If non-nil this overrides
+    /// ``chaptersPerDay`` for the specified days.
+    var chaptersPerDayByDay: [String: Int]? = nil
+
     /// Which days of the week the user intends to read. Values use three letter
     /// abbreviations ("Mon", "Tue", etc.).
     var readingDays: [String] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -88,6 +93,12 @@ struct ReadingPlan: Codable, Identifiable {
 
     /// Notifications/encouragements enabled
     var notificationsEnabled: Bool = false
+
+    /// Preferred notification time represented as minutes from midnight
+    var notificationTimeMinutes: Int? = nil
+
+    /// Optional custom notification times per weekday in minutes from midnight
+    var notificationTimesByDay: [String: Int]? = nil
 
     /// How the goal is interpreted
     var goalType: ReadingPlanGoalType = .chaptersPerDay
@@ -107,9 +118,16 @@ struct ReadingPlan: Codable, Identifiable {
         case .finishByDate:
             return finishBy ?? startDate
         case .chaptersPerDay:
-            let daily = Double(chaptersPerDay ?? 1)
-            let daysPerWeek = max(Double(readingDays.count), 1)
-            let perWeek = daily * daysPerWeek
+            let perWeek: Double
+            if let custom = chaptersPerDayByDay {
+                perWeek = readingDays.reduce(0) { sum, day in
+                    sum + Double(custom[day] ?? (chaptersPerDay ?? 0))
+                }
+            } else {
+                let daily = Double(chaptersPerDay ?? 1)
+                let daysPerWeek = max(Double(readingDays.count), 1)
+                perWeek = daily * daysPerWeek
+            }
             let weeks = ceil(Double(1189) / max(perWeek, 1))
             return Calendar.current.date(byAdding: .day, value: Int(weeks * 7), to: startDate) ?? startDate
         case .flexible:
@@ -141,9 +159,12 @@ extension ReadingPlan {
         id = dict["id"] as? String ?? UUID().uuidString
         if let finish = dict["finishBy"] as? Timestamp { finishBy = finish.dateValue() }
         chaptersPerDay = dict["chaptersPerDay"] as? Int
+        chaptersPerDayByDay = dict["chaptersPerDayByDay"] as? [String: Int]
         readingDays = dict["readingDays"] as? [String] ?? ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
         allowNonLinear = dict["allowNonLinear"] as? Bool ?? true
         notificationsEnabled = dict["notificationsEnabled"] as? Bool ?? false
+        notificationTimeMinutes = dict["notificationTimeMinutes"] as? Int
+        notificationTimesByDay = dict["notificationTimesByDay"] as? [String: Int]
         goalType = ReadingPlanGoalType(rawValue: dict["goalType"] as? String ?? "chaptersPerDay") ?? .chaptersPerDay
         preset = ReadingPlanPreset(rawValue: dict["preset"] as? String ?? "fullBible") ?? .fullBible
         if let nodeData = dict["nodes"] as? [[String: Any]] {
@@ -166,6 +187,9 @@ extension ReadingPlan {
         if let color = colorHex { dict["colorHex"] = color }
         if let finish = finishBy { dict["finishBy"] = Timestamp(date: finish) }
         if let perDay = chaptersPerDay { dict["chaptersPerDay"] = perDay }
+        if let custom = chaptersPerDayByDay { dict["chaptersPerDayByDay"] = custom }
+        if let time = notificationTimeMinutes { dict["notificationTimeMinutes"] = time }
+        if let times = notificationTimesByDay { dict["notificationTimesByDay"] = times }
         return dict
     }
 }
