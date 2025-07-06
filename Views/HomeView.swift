@@ -91,18 +91,6 @@ struct HomeView: View {
                         }
                     }
                     HomeSettingsView()
-                    // Temporary buttons to preview celebration effects
-                    VStack(spacing: 12) {
-                        Button("Test Chapter Effect") {
-                            authViewModel.triggerChapterCelebration()
-                        }
-                        Button("Test Book Effect") {
-                            authViewModel.triggerBookCelebration()
-                        }
-                        Button("Test Bible Effect") {
-                            authViewModel.triggerBibleCelebration()
-                        }
-                    }
                     Spacer()
                 }
                 .padding()
