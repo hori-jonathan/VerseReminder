@@ -66,7 +66,7 @@ struct ExpandedBookView: View {
                 destination: selectedChapter.map {
                     ChapterView(
                         chapterId: "\($0.book.id).\($0.chapter)",
-                        bibleId: defaultBibleId,
+                        bibleId: authViewModel.profile.bibleId,
                         highlightVerse: $0.verse
                     )
                 },

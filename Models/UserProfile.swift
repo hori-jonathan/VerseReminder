@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 struct UserProfile {
     var chaptersRead: [String: [Int]]
@@ -13,6 +14,12 @@ struct UserProfile {
     var chapterNotes: [String: String]
     /// User notes for individual verses keyed by chapter id then verse number
     var verseNotes: [String: [String: String]]
+    // App settings
+    var bibleId: String
+    var fontSize: FontSizeOption
+    var fontChoice: FontChoice
+    var verseSpacing: VerseSpacingOption
+    var theme: AppTheme
 
     init(chaptersRead: [String: [Int]] = [:],
          chaptersBookmarked: [String: [Int]] = [:],
@@ -22,7 +29,12 @@ struct UserProfile {
          lastReadBookId: String? = nil,
          dailyChapterCounts: [String: Int] = [:],
          chapterNotes: [String: String] = [:],
-         verseNotes: [String: [String: String]] = [:]) {
+         verseNotes: [String: [String: String]] = [:],
+         bibleId: String = defaultBibleId,
+         fontSize: FontSizeOption = .medium,
+         fontChoice: FontChoice = .system,
+         verseSpacing: VerseSpacingOption = .regular,
+         theme: AppTheme = .light) {
         self.chaptersRead = chaptersRead
         self.chaptersBookmarked = chaptersBookmarked
         self.lastRead = lastRead
@@ -32,6 +44,11 @@ struct UserProfile {
         self.dailyChapterCounts = dailyChapterCounts
         self.chapterNotes = chapterNotes
         self.verseNotes = verseNotes
+        self.bibleId = bibleId
+        self.fontSize = fontSize
+        self.fontChoice = fontChoice
+        self.verseSpacing = verseSpacing
+        self.theme = theme
     }
 }
 
@@ -49,7 +66,12 @@ extension UserProfile {
         let dailyCounts = dict["dailyChapterCounts"] as? [String: Int] ?? [:]
         let chapterNotes = dict["chapterNotes"] as? [String: String] ?? [:]
         let verseNotes = dict["verseNotes"] as? [String: [String: String]] ?? [:]
-        self.init(chaptersRead: chaptersRead, chaptersBookmarked: chaptersBookmarked, lastRead: lastRead, readingPlan: plan, bookmarks: bookmarks, lastReadBookId: lastBook, dailyChapterCounts: dailyCounts, chapterNotes: chapterNotes, verseNotes: verseNotes)
+        let bibleId = dict["bibleId"] as? String ?? defaultBibleId
+        let fontSize = FontSizeOption(rawValue: dict["fontSize"] as? String ?? FontSizeOption.medium.rawValue) ?? .medium
+        let fontChoice = FontChoice(rawValue: dict["fontChoice"] as? String ?? FontChoice.system.rawValue) ?? .system
+        let verseSpacing = VerseSpacingOption(rawValue: dict["verseSpacing"] as? String ?? VerseSpacingOption.regular.rawValue) ?? .regular
+        let theme = AppTheme(rawValue: dict["theme"] as? String ?? AppTheme.light.rawValue) ?? .light
+        self.init(chaptersRead: chaptersRead, chaptersBookmarked: chaptersBookmarked, lastRead: lastRead, readingPlan: plan, bookmarks: bookmarks, lastReadBookId: lastBook, dailyChapterCounts: dailyCounts, chapterNotes: chapterNotes, verseNotes: verseNotes, bibleId: bibleId, fontSize: fontSize, fontChoice: fontChoice, verseSpacing: verseSpacing, theme: theme)
     }
 
     var dictionary: [String: Any] {
@@ -60,7 +82,12 @@ extension UserProfile {
             "bookmarks": bookmarks,
             "dailyChapterCounts": dailyChapterCounts,
             "chapterNotes": chapterNotes,
-            "verseNotes": verseNotes
+            "verseNotes": verseNotes,
+            "bibleId": bibleId,
+            "fontSize": fontSize.rawValue,
+            "fontChoice": fontChoice.rawValue,
+            "verseSpacing": verseSpacing.rawValue,
+            "theme": theme.rawValue
         ]
         if let plan = readingPlan {
             dict["readingPlan"] = plan.dictionary

@@ -59,7 +59,7 @@ struct HomeView: View {
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
                                 if read < goal, let last = lastReadReference() {
-                                    NavigationLink(destination: ChapterView(chapterId: last.ref, bibleId: defaultBibleId, highlightVerse: last.verse)) {
+                                    NavigationLink(destination: ChapterView(chapterId: last.ref, bibleId: authViewModel.profile.bibleId, highlightVerse: last.verse)) {
                                         Text("Continue where you left off")
                                             .frame(maxWidth: .infinity)
                                             .padding()
@@ -83,6 +83,7 @@ struct HomeView: View {
                                 .cornerRadius(12)
                         }
                     }
+                    HomeSettingsView()
                     Spacer()
                 }
                 .padding()

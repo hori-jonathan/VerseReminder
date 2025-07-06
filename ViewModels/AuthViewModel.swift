@@ -213,4 +213,30 @@ class AuthViewModel: ObservableObject {
         }
         saveProfile()
     }
+
+    // MARK: - Settings
+    func updateBibleId(_ id: String) {
+        profile.bibleId = id
+        saveProfile()
+    }
+
+    func updateFontSize(_ size: FontSizeOption) {
+        profile.fontSize = size
+        saveProfile()
+    }
+
+    func updateFontChoice(_ choice: FontChoice) {
+        profile.fontChoice = choice
+        saveProfile()
+    }
+
+    func updateVerseSpacing(_ spacing: VerseSpacingOption) {
+        profile.verseSpacing = spacing
+        saveProfile()
+    }
+
+    func updateTheme(_ theme: AppTheme) {
+        profile.theme = theme
+        saveProfile()
+    }
 }

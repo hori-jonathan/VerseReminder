@@ -27,6 +27,8 @@ struct RootView: View {
                 }
             }
         }
+        .preferredColorScheme(authViewModel.profile.theme.colorScheme)
+        .tint(authViewModel.profile.theme.accentColor)
         .task {
             authViewModel.start()
         }

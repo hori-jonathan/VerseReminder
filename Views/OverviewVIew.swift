@@ -117,7 +117,7 @@ class BibleSearchManager: ObservableObject {
         for (index, result) in searchResults.enumerated() where result.type == .verse {
             if let chapter = result.chapter, let verse = result.verse {
                 let ref = "\(result.book.id).\(chapter).\(verse)"
-                BibleAPI.shared.fetchVerse(reference: ref, bibleId: defaultBibleId) { res in
+                BibleAPI.shared.fetchVerse(reference: ref, bibleId: authViewModel.profile.bibleId) { res in
                     if case .success(let verseObj) = res {
                         DispatchQueue.main.async {
                             if index < self.searchResults.count {
@@ -345,7 +345,7 @@ struct OverviewView: View {
                     destination: selectedChapter.map {
                         ChapterView(
                             chapterId: "\($0.book.id).\($0.chapter)",
-                            bibleId: defaultBibleId,
+                            bibleId: authViewModel.profile.bibleId,
                             highlightVerse: $0.verse
                         )
                     },

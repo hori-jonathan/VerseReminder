@@ -18,7 +18,7 @@ struct StudyView: View {
                             NavigationLink(
                                 destination: ChapterView(
                                     chapterId: referencePrefix(for: verse.id),
-                                    bibleId: defaultBibleId,
+                                    bibleId: authViewModel.profile.bibleId,
                                     highlightVerse: Int(verse.verseNumber)
                                 )
                             ) {
@@ -49,7 +49,7 @@ struct StudyView: View {
                                 NavigationLink(
                                     destination: ChapterView(
                                         chapterId: entry.chapterId,
-                                        bibleId: defaultBibleId,
+                                        bibleId: authViewModel.profile.bibleId,
                                         highlightVerse: entry.verse
                                     )
                                 ) {
