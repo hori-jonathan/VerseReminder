@@ -37,6 +37,7 @@ class BibleSearchManager: ObservableObject {
     @Published var isSearching = false
     @Published var showingSearchResults = false
     @Published var scopeBook: BibleBook? = nil
+    @Published var bibleId: String = defaultBibleId
     
     private var searchTimer: Timer?
     private let allBooks: [BibleBook]
@@ -117,7 +118,7 @@ class BibleSearchManager: ObservableObject {
         for (index, result) in searchResults.enumerated() where result.type == .verse {
             if let chapter = result.chapter, let verse = result.verse {
                 let ref = "\(result.book.id).\(chapter).\(verse)"
-                BibleAPI.shared.fetchVerse(reference: ref, bibleId: authViewModel.profile.bibleId) { res in
+                BibleAPI.shared.fetchVerse(reference: ref, bibleId: bibleId) { res in
                     if case .success(let verseObj) = res {
                         DispatchQueue.main.async {
                             if index < self.searchResults.count {
@@ -390,6 +391,12 @@ struct OverviewView: View {
         .sheet(isPresented: $showBookmarks) {
             BookmarksView()
                 .environmentObject(booksNav)
+        }
+        .onAppear {
+            searchManager.bibleId = authViewModel.profile.bibleId
+        }
+        .onChange(of: authViewModel.profile.bibleId) { newId in
+            searchManager.bibleId = newId
         }
     }
     

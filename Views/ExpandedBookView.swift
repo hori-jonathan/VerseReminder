@@ -93,7 +93,13 @@ struct ExpandedBookView: View {
                 )
             ) { EmptyView() }
         }
-        .onAppear { searchManager.scopeBook = book }
+        .onAppear {
+            searchManager.scopeBook = book
+            searchManager.bibleId = authViewModel.profile.bibleId
+        }
+        .onChange(of: authViewModel.profile.bibleId) { newId in
+            searchManager.bibleId = newId
+        }
         .onReceive(booksNav.$resetTrigger.dropFirst()) { _ in
             dismiss()
         }

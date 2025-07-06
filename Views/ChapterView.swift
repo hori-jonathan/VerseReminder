@@ -116,7 +116,13 @@ struct ChapterView: View {
                 }
             }
         }
-        .onAppear(perform: loadChapter)
+        .onAppear {
+            loadChapter()
+            searchManager.bibleId = authViewModel.profile.bibleId
+        }
+        .onChange(of: authViewModel.profile.bibleId) { newId in
+            searchManager.bibleId = newId
+        }
         .onReceive(booksNav.$resetTrigger.dropFirst()) { _ in
             dismiss()
         }
