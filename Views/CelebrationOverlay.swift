@@ -11,33 +11,29 @@ enum CelebrationEvent {
 struct CelebrationOverlay: View {
   let event: CelebrationEvent?
   @Environment(\.colorScheme) private var scheme
+  @State private var show = false
+  @State private var currentEvent: CelebrationEvent?
 
   private var fadeColor: Color {
     scheme == .dark ? .black : .white
   }
 
   var body: some View {
-    if let event = event {
+    if let active = currentEvent {
       ZStack {
         fadeColor.opacity(0.6)
           .ignoresSafeArea()
           .transition(.opacity)
         VStack {
-          if case .book(let progress) = event {
+          if case .book(let progress) = active {
             CelebrationProgress(progress: progress)
               .padding(.top, 50)
             Spacer()
-          } else if case .bible = event {
+          } else if case .bible = active {
             CelebrationProgress(progress: 1)
               .padding(.top, 50)
-            Text("Congratulations! You've completed the Bible!")
-              .font(.title)
-              .fontWeight(.heavy)
-              .foregroundColor(.yellow)
-              .shadow(color: Color.yellow.opacity(0.7), radius: 6)
-              .padding(.top, 8)
             Spacer()
-          } else if case .chapter = event {
+          } else if case .chapter = active {
             ChapterProgressBar()
               .padding(.top, 50)
             Spacer()
@@ -51,7 +47,25 @@ struct CelebrationOverlay: View {
         }
       }
       .transition(.opacity)
-      .animation(.easeInOut(duration: 0.5), value: event != nil)
+      .animation(.easeInOut(duration: 0.35), value: show)
+      .opacity(show ? 1 : 0)
+      .onAppear {
+        currentEvent = event
+        withAnimation(.easeInOut(duration: 0.35)) { show = true }
+      }
+      .onChange(of: event) { newValue in
+        if let new = newValue {
+          currentEvent = new
+          withAnimation(.easeInOut(duration: 0.35)) { show = true }
+        } else {
+          withAnimation(.easeInOut(duration: 0.35)) { show = false }
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            if event == nil {
+              currentEvent = nil
+            }
+          }
+        }
+      }
     }
   }
 }
