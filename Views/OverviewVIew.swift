@@ -288,7 +288,7 @@ struct OverviewView: View {
                                 )
                             },
                             onExpandBook: { book in
-                                booksNav.path.append(.expandedBook(book.id))
+                                booksNav.path.append(BooksRoute.expandedBook(book.id))
                             }
                         )
                         TestamentSection(
@@ -304,7 +304,7 @@ struct OverviewView: View {
                                 )
                             },
                             onExpandBook: { book in
-                                booksNav.path.append(.expandedBook(book.id))
+                                booksNav.path.append(BooksRoute.expandedBook(book.id))
                             }
                         )
                         }
@@ -357,7 +357,7 @@ struct OverviewView: View {
     private func handleSearchResultSelection(_ result: BibleSearchResult) {
         switch result.type {
         case .book:
-            booksNav.path.append(.expandedBook(result.book.id))
+            booksNav.path.append(BooksRoute.expandedBook(result.book.id))
             searchManager.clearSearch()
         case .chapter:
             booksNav.path.append(
