@@ -8,6 +8,7 @@ struct ExpandedBookView: View {
     let lastRead: [String: (chapter: Int, verse: Int)]
     let onSelectChapter: (BibleBook, Int) -> Void
 
+    @EnvironmentObject var authViewModel: AuthViewModel
     @EnvironmentObject var booksNav: BooksNavigationManager
     @Environment(\.dismiss) private var dismiss
 
