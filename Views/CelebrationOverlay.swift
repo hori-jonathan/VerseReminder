@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Celebration events triggered by reading progress.
-enum CelebrationEvent {
+enum CelebrationEvent: Equatable {
   case chapter
   case book(progress: Double)
   case bible
