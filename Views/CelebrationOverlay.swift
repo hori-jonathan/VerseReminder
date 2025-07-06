@@ -10,10 +10,18 @@ enum CelebrationEvent {
 /// Overlay that displays progress indicators when events fire.
 struct CelebrationOverlay: View {
   let event: CelebrationEvent?
+  @Environment(\.colorScheme) private var scheme
+
+  private var fadeColor: Color {
+    scheme == .dark ? .black : .white
+  }
+
   var body: some View {
     if let event = event {
       ZStack {
-        Color.clear.ignoresSafeArea()
+        fadeColor.opacity(0.6)
+          .ignoresSafeArea()
+          .transition(.opacity)
         VStack {
           if case .book(let progress) = event {
             CelebrationProgress(progress: progress)
@@ -36,9 +44,14 @@ struct CelebrationOverlay: View {
           } else {
             Spacer()
           }
+          Text("Keep studying and thank you for using our app!")
+            .font(.footnote)
+            .foregroundColor(.secondary)
+            .padding(.top, 20)
         }
       }
       .transition(.opacity)
+      .animation(.easeInOut(duration: 0.5), value: event != nil)
     }
   }
 }
@@ -46,17 +59,14 @@ struct CelebrationOverlay: View {
 /// Simple progress bar used for book and bible completion.
 struct CelebrationProgress: View {
   let progress: Double
-  private let gradient = LinearGradient(
-    gradient: Gradient(colors: [Color.yellow, Color.orange]), startPoint: .leading,
-    endPoint: .trailing)
   var body: some View {
     VStack(spacing: 8) {
       Text(String(format: "%.0f%% Complete", progress * 100))
-        .foregroundColor(.yellow)
+        .foregroundColor(Color.accentColor)
         .font(.headline)
       ProgressView(value: progress)
         .progressViewStyle(LinearProgressViewStyle())
-        .tint(gradient)
+        .tint(Color.accentColor)
         .frame(width: 220)
     }
     .padding(12)
@@ -70,7 +80,7 @@ struct ChapterProgressBar: View {
   @State private var progress: Double = 0
   var body: some View {
     ProgressView(value: progress)
-      .progressViewStyle(LinearProgressViewStyle(tint: .gray))
+      .progressViewStyle(LinearProgressViewStyle(tint: Color.accentColor))
       .frame(width: 150)
       .onAppear {
         withAnimation(.easeOut(duration: 1.0)) {
