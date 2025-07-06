@@ -47,16 +47,31 @@ struct HomeView: View {
                         .padding(.top, 4)
                     }
 
-                        if let last = lastReadReference() {
-                            NavigationLink(destination: ChapterView(chapterId: last.ref, bibleId: defaultBibleId, highlightVerse: last.verse)) {
-                                Text("Continue Reading")
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                                    .background(Color.green)
-                                    .foregroundColor(.white)
-                                    .cornerRadius(12)
+                    if let plan = authViewModel.profile.readingPlan {
+                        let goal = plan.chaptersForDate(Date())
+                        let read = authViewModel.profile.todayChaptersRead
+                        if goal > 0 {
+                            VStack(spacing: 12) {
+                                Text("Today's Progress")
+                                    .font(.headline)
+                                DailyProgressCircle(progress: Double(read) / Double(goal))
+                                Text("You've read \(read) of \(goal) chapters today")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                if read < goal, let last = lastReadReference() {
+                                    NavigationLink(destination: ChapterView(chapterId: last.ref, bibleId: defaultBibleId, highlightVerse: last.verse)) {
+                                        Text("Continue where you left off")
+                                            .frame(maxWidth: .infinity)
+                                            .padding()
+                                            .background(Color.green)
+                                            .foregroundColor(.white)
+                                            .cornerRadius(12)
+                                    }
+                                }
                             }
+                            .frame(maxWidth: .infinity)
                         }
+                    }
                     } else {
                         VStack(spacing: 16) {
                             Text("No reading plan yet")

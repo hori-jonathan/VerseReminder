@@ -7,19 +7,23 @@ struct UserProfile {
     var readingPlan: ReadingPlan?
     var bookmarks: [String]
     var lastReadBookId: String?
+    /// Map of ISO date strings (YYYY-MM-DD) to count of chapters read that day
+    var dailyChapterCounts: [String: Int]
 
     init(chaptersRead: [String: [Int]] = [:],
          chaptersBookmarked: [String: [Int]] = [:],
          lastRead: [String: [String: Int]] = [:],
          readingPlan: ReadingPlan? = nil,
          bookmarks: [String] = [],
-         lastReadBookId: String? = nil) {
+         lastReadBookId: String? = nil,
+         dailyChapterCounts: [String: Int] = [:]) {
         self.chaptersRead = chaptersRead
         self.chaptersBookmarked = chaptersBookmarked
         self.lastRead = lastRead
         self.readingPlan = readingPlan
         self.bookmarks = bookmarks
         self.lastReadBookId = lastReadBookId
+        self.dailyChapterCounts = dailyChapterCounts
     }
 }
 
@@ -34,7 +38,8 @@ extension UserProfile {
         }
         let bookmarks = dict["bookmarks"] as? [String] ?? []
         let lastBook = dict["lastReadBookId"] as? String
-        self.init(chaptersRead: chaptersRead, chaptersBookmarked: chaptersBookmarked, lastRead: lastRead, readingPlan: plan, bookmarks: bookmarks, lastReadBookId: lastBook)
+        let dailyCounts = dict["dailyChapterCounts"] as? [String: Int] ?? [:]
+        self.init(chaptersRead: chaptersRead, chaptersBookmarked: chaptersBookmarked, lastRead: lastRead, readingPlan: plan, bookmarks: bookmarks, lastReadBookId: lastBook, dailyChapterCounts: dailyCounts)
     }
 
     var dictionary: [String: Any] {
@@ -42,7 +47,8 @@ extension UserProfile {
             "chaptersRead": chaptersRead,
             "chaptersBookmarked": chaptersBookmarked,
             "lastRead": lastRead,
-            "bookmarks": bookmarks
+            "bookmarks": bookmarks,
+            "dailyChapterCounts": dailyChapterCounts
         ]
         if let plan = readingPlan {
             dict["readingPlan"] = plan.dictionary
@@ -55,5 +61,9 @@ extension UserProfile {
 
     var totalChaptersRead: Int {
         chaptersRead.values.reduce(0) { $0 + $1.count }
+    }
+
+    var todayChaptersRead: Int {
+        dailyChapterCounts[Date().isoDateString] ?? 0
     }
 }

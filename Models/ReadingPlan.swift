@@ -192,5 +192,15 @@ extension ReadingPlan {
         if let times = notificationTimesByDay { dict["notificationTimesByDay"] = times }
         return dict
     }
+
+    /// Chapters expected to be read on the given date.
+    func chaptersForDate(_ date: Date) -> Int {
+        let day = date.weekdayAbbrev
+        guard readingDays.contains(day) else { return 0 }
+        if let custom = chaptersPerDayByDay?[day] {
+            return custom
+        }
+        return chaptersPerDay ?? 1
+    }
 }
 

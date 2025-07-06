@@ -130,6 +130,8 @@ class AuthViewModel: ObservableObject {
         if !set.contains(chapter) {
             set.insert(chapter)
             profile.chaptersRead[bookId] = Array(set).sorted()
+            let key = Date().isoDateString
+            profile.dailyChapterCounts[key, default: 0] += 1
         }
         profile.lastRead[bookId] = ["chapter": chapter, "verse": verse]
         profile.lastReadBookId = bookId
