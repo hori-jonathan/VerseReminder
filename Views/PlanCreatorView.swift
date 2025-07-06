@@ -89,14 +89,23 @@ struct PlanCreatorView: View {
 
                 Picker("Goal", selection: $goalType) {
                     Text("Chapters/Day").tag(ReadingPlanGoalType.chaptersPerDay)
-                    Text("Finish By Date").tag(ReadingPlanGoalType.finishByDate)
+                    if existingPlan == nil {
+                        Text("Finish By Date").tag(ReadingPlanGoalType.finishByDate)
+                    }
                 }
                 .pickerStyle(SegmentedPickerStyle())
+                .onAppear {
+                    if existingPlan != nil && goalType == .finishByDate {
+                        goalType = .chaptersPerDay
+                    }
+                }
 
                 VStack(alignment: .leading) {
                     HStack {
                         Text("Chapters per Day: \(chaptersPerDay)")
-                        Slider(value: Binding(get: { Double(chaptersPerDay) }, set: { chaptersPerDay = Int($0) }), in: 1...10, step: 1)
+                        Stepper("", value: $chaptersPerDay, in: 1...100)
+                            .labelsHidden()
+                        Slider(value: Binding(get: { Double(min(chaptersPerDay, 20)) }, set: { chaptersPerDay = Int($0) }), in: 1...20, step: 1)
                     }
                     .disabled(goalType != .chaptersPerDay)
                     Toggle("Customize per-day amounts", isOn: $useCustomPerDay)
@@ -104,17 +113,21 @@ struct PlanCreatorView: View {
                         ForEach(allDays, id: \.self) { day in
                             HStack {
                                 Text(day)
-                                Slider(value: Binding(get: { Double(customPerDay[day] ?? chaptersPerDay) }, set: { customPerDay[day] = Int($0) }), in: 0...10, step: 1)
+                                Stepper("", value: Binding(get: { customPerDay[day] ?? chaptersPerDay }, set: { customPerDay[day] = min(max($0, 0), 100) }), in: 0...100)
+                                    .labelsHidden()
+                                Slider(value: Binding(get: { Double(min(customPerDay[day] ?? chaptersPerDay, 20)) }, set: { customPerDay[day] = Int($0) }), in: 0...20, step: 1)
                                 Text("\(customPerDay[day] ?? chaptersPerDay)")
                             }
                         }
                     }
                 }
 
-                VStack(alignment: .leading) {
-                    DatePicker("Finish By", selection: $finishBy, displayedComponents: .date)
+                if existingPlan == nil {
+                    VStack(alignment: .leading) {
+                        DatePicker("Finish By", selection: $finishBy, displayedComponents: .date)
+                    }
+                    .disabled(goalType != .finishByDate)
                 }
-                .disabled(goalType != .finishByDate)
 
                 VStack(alignment: .leading) {
                     Text("Reading Days")
