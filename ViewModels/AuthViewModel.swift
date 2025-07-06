@@ -264,7 +264,7 @@ class AuthViewModel: ObservableObject {
 
     private func triggerCelebration(_ event: CelebrationEvent) {
         celebrationEvent = event
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
             if self?.celebrationEvent != nil {
                 self?.celebrationEvent = nil
             }
