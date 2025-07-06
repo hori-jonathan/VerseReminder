@@ -2,6 +2,8 @@ import SwiftUI
 
 struct HomeView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
+    @EnvironmentObject var booksNav: BooksNavigationManager
+    @EnvironmentObject var tabManager: TabSelectionManager
 
     @State private var showPlanCreator = false
     @State private var editingPlan: ReadingPlan? = nil
@@ -59,7 +61,12 @@ struct HomeView: View {
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
                                 if read < goal, let last = lastReadReference() {
-                                    NavigationLink(destination: ChapterView(chapterId: last.ref, bibleId: authViewModel.profile.bibleId, highlightVerse: last.verse)) {
+                                    Button(action: {
+                                        let parts = last.ref.split(separator: ".")
+                                        let bookId = String(parts[0])
+                                        let chapter = Int(parts[1]) ?? 1
+                                        booksNav.openChapter(bookId: bookId, chapter: chapter, highlight: last.verse, tabManager: tabManager)
+                                    }) {
                                         Text("Continue where you left off")
                                             .frame(maxWidth: .infinity)
                                             .padding()

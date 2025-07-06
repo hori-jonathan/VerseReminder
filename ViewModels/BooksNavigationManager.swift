@@ -1,23 +1,27 @@
 import Foundation
 import SwiftUI
 
-/// Observable object that allows views in the Books navigation stack
-/// to programmatically pop back to the root "Books" page.
-class BooksNavigationManager: ObservableObject {
-    /// Changing this value notifies all views to dismiss themselves.
-    @Published private(set) var resetTrigger: Int = 0
+/// Destinations for the Books navigation stack.
+enum BooksRoute: Hashable {
+    case expandedBook(String)
+    case chapter(bookId: String, chapter: Int, highlight: Int?)
+}
 
-    /// Call to trigger a pop-to-root of all active views in the Books stack.
-    ///
-    /// Sends several sequential increments so that each active view
-    /// in the stack receives a dismissal signal even if others are
-    /// still animating out. This avoids the back button effect where
-    /// only the top view closes.
-    func popToRoot() {
-        for step in 0..<5 { // support up to 5 stacked views
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(step) * 0.05) {
-                self.resetTrigger += 1
-            }
-        }
+/// Observable object managing navigation within the Books tab.
+class BooksNavigationManager: ObservableObject {
+    /// The navigation path for the Books stack.
+    @Published var path = NavigationPath()
+
+    /// Push a chapter onto the stack and switch to the Books tab.
+    func openChapter(bookId: String, chapter: Int, highlight: Int? = nil,
+                     tabManager: TabSelectionManager) {
+        tabManager.selection = .books
+        path.append(BooksRoute.chapter(bookId: bookId, chapter: chapter, highlight: highlight))
+    }
+
+    /// Return to the root Books view and select the Books tab.
+    func popToRoot(tabManager: TabSelectionManager) {
+        tabManager.selection = .books
+        path = NavigationPath()
     }
 }

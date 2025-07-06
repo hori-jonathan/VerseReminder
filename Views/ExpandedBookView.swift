@@ -10,10 +10,9 @@ struct ExpandedBookView: View {
 
     @EnvironmentObject var authViewModel: AuthViewModel
     @EnvironmentObject var booksNav: BooksNavigationManager
+    @EnvironmentObject var tabManager: TabSelectionManager
     @Environment(\.dismiss) private var dismiss
 
-    @State private var selectedChapter: (book: BibleBook, chapter: Int, verse: Int?)? = nil
-    @State private var selectedBook: BibleBook? = nil
     @State private var showBookmarks = false
 
     var body: some View {
@@ -63,36 +62,6 @@ struct ExpandedBookView: View {
                 }
             }
 
-            NavigationLink(
-                destination: selectedChapter.map {
-                    ChapterView(
-                        chapterId: "\($0.book.id).\($0.chapter)",
-                        bibleId: authViewModel.profile.bibleId,
-                        highlightVerse: $0.verse
-                    )
-                },
-                isActive: Binding(
-                    get: { selectedChapter != nil },
-                    set: { if !$0 { selectedChapter = nil } }
-                )
-            ) { EmptyView() }
-
-            NavigationLink(
-                destination: selectedBook.map {
-                    ExpandedBookView(
-                        book: $0,
-                        searchManager: searchManager,
-                        chaptersRead: chaptersRead,
-                        chaptersBookmarked: chaptersBookmarked,
-                        lastRead: lastRead,
-                        onSelectChapter: onSelectChapter
-                    )
-                },
-                isActive: Binding(
-                    get: { selectedBook != nil },
-                    set: { if !$0 { selectedBook = nil } }
-                )
-            ) { EmptyView() }
         }
         .onAppear {
             searchManager.scopeBook = book
@@ -100,9 +69,6 @@ struct ExpandedBookView: View {
         }
         .onChange(of: authViewModel.profile.bibleId) { newId in
             searchManager.bibleId = newId
-        }
-        .onReceive(booksNav.$resetTrigger.dropFirst()) { _ in
-            dismiss()
         }
         .onDisappear {
             searchManager.scopeBook = nil
@@ -140,22 +106,23 @@ struct ExpandedBookView: View {
     private func handleSearchResult(_ result: BibleSearchResult) {
         switch result.type {
         case .book:
-            // When selecting another book, clear any pending chapter
-            // navigation to prevent unintended pushes
-            selectedChapter = nil
-            selectedBook = result.book
+            booksNav.path.append(.expandedBook(result.book.id))
             searchManager.clearSearch()
         case .chapter:
-            selectedChapter = (result.book, result.chapter ?? 1, nil)
+            onSelectChapter(result.book, result.chapter ?? 1)
             searchManager.clearSearch()
         case .verse:
-            selectedChapter = (result.book, result.chapter ?? 1, result.verse)
+            booksNav.path.append(
+                BooksRoute.chapter(bookId: result.book.id,
+                                   chapter: result.chapter ?? 1,
+                                   highlight: result.verse)
+            )
             searchManager.clearSearch()
         }
     }
 
     private func backToBooks() {
-        booksNav.popToRoot()
+        booksNav.popToRoot(tabManager: tabManager)
     }
 }
 
