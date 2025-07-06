@@ -68,6 +68,8 @@ struct ContentView: View {
             }
             .environmentObject(booksNavigationManager)
             .environmentObject(tabManager)
+
+            CelebrationOverlay(event: authViewModel.celebrationEvent)
         }
     }
 }
