@@ -55,7 +55,8 @@ struct CelebrationProgress: View {
         .foregroundColor(.yellow)
         .font(.headline)
       ProgressView(value: progress)
-        .progressViewStyle(LinearProgressViewStyle(tint: gradient))
+        .progressViewStyle(LinearProgressViewStyle())
+        .tint(gradient)
         .frame(width: 220)
     }
     .padding(12)
