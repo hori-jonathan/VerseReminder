@@ -3,12 +3,13 @@ import SwiftUI
 struct HomeSettingsView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
 
+    // Bible translation options now map directly to SQLite database files
     private let bibleOptions: [(name: String, id: String)] = [
-        ("ESV", "179568874c45066f-01"),
-        ("KJV", "de4e12af7f28f599-02"),
-        ("NIV", "06125adad2d5898a-01"),
-        ("NKJV", "b4cb7bdb3da2f761-01"),
-        ("NLT", "fae20f318bf5bc7c-02")
+        ("DRA", "bible_dra.sqlite"),
+        ("ASV", "bible_asv.sqlite"),
+        ("DBY", "bible_dby.sqlite"),
+        ("KJV", "bible_kjv.sqlite"),
+        ("WYC", "bible_wyc.sqlite")
     ]
 
     @State private var fontSizeValue: Double = 1
