@@ -14,9 +14,14 @@ struct PlanCreatorView: View {
     @State private var name: String = "My Plan"
     @State private var goalType: ReadingPlanGoalType = .chaptersPerDay
     @State private var chaptersPerDay: Int = 1
+    @State private var customPerDay: [String: Int] = [:]
+    @State private var useCustomPerDay: Bool = false
     @State private var finishBy: Date = Calendar.current.date(byAdding: .month, value: 3, to: Date()) ?? Date()
     @State private var startDate: Date = Date()
     @State private var notificationsEnabled: Bool = false
+    @State private var notificationTime: Date = Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: Date()) ?? Date()
+    @State private var customTimes: [String: Date] = [:]
+    @State private var useCustomTimes: Bool = false
     @State private var readingDays: Set<String> = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     @State private var allowNonLinear: Bool = true
     @State private var preset: ReadingPlanPreset = .fullBible
@@ -26,24 +31,43 @@ struct PlanCreatorView: View {
         _name = State(initialValue: existingPlan?.name ?? "My Plan")
         _goalType = State(initialValue: existingPlan?.goalType ?? .chaptersPerDay)
         _chaptersPerDay = State(initialValue: existingPlan?.chaptersPerDay ?? 1)
+        _useCustomPerDay = State(initialValue: existingPlan?.chaptersPerDayByDay != nil)
+        _customPerDay = State(initialValue: existingPlan?.chaptersPerDayByDay ?? [:])
         _finishBy = State(initialValue: existingPlan?.finishBy ?? Calendar.current.date(byAdding: .month, value: 3, to: Date()) ?? Date())
         _startDate = State(initialValue: existingPlan?.startDate ?? Date())
         _notificationsEnabled = State(initialValue: existingPlan?.notificationsEnabled ?? false)
+        let globalTime = existingPlan?.notificationTimeMinutes
+            .flatMap { PlanCreatorView.minutesToDate($0) } ?? Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: Date())!
+        _notificationTime = State(initialValue: globalTime)
+        _useCustomTimes = State(initialValue: existingPlan?.notificationTimesByDay != nil)
+        _customTimes = State(initialValue: existingPlan?.notificationTimesByDay?.mapValues { PlanCreatorView.minutesToDate($0) } ?? [:])
         _readingDays = State(initialValue: Set(existingPlan?.readingDays ?? ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]))
         _allowNonLinear = State(initialValue: existingPlan?.allowNonLinear ?? true)
         _preset = State(initialValue: existingPlan?.preset ?? .fullBible)
     }
     private let allDays = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
 
+    static func dateToMinutes(_ date: Date) -> Int {
+        let comps = Calendar.current.dateComponents([.hour, .minute], from: date)
+        return (comps.hour ?? 0) * 60 + (comps.minute ?? 0)
+    }
+
+    static func minutesToDate(_ minutes: Int) -> Date {
+        Calendar.current.date(bySettingHour: minutes / 60, minute: minutes % 60, second: 0, of: Date()) ?? Date()
+    }
+
     var estimatedCompletion: Date {
         let plan = ReadingPlan(
             name: name,
             startDate: startDate,
             finishBy: goalType == .finishByDate ? finishBy : nil,
-            chaptersPerDay: goalType == .chaptersPerDay ? chaptersPerDay : nil,
+            chaptersPerDay: chaptersPerDay,
+            chaptersPerDayByDay: useCustomPerDay ? customPerDay : nil,
             readingDays: Array(readingDays),
             allowNonLinear: allowNonLinear,
             notificationsEnabled: notificationsEnabled,
+            notificationTimeMinutes: notificationsEnabled ? PlanCreatorView.dateToMinutes(notificationTime) : nil,
+            notificationTimesByDay: (notificationsEnabled && useCustomTimes) ? customTimes.mapValues { PlanCreatorView.dateToMinutes($0) } : nil,
             goalType: goalType,
             preset: preset,
             nodes: []
@@ -69,13 +93,28 @@ struct PlanCreatorView: View {
                 }
                 .pickerStyle(SegmentedPickerStyle())
 
-                if goalType == .chaptersPerDay {
-                    Stepper(value: $chaptersPerDay, in: 1...10) {
-                        Text("\(chaptersPerDay) chapters per day")
+                VStack(alignment: .leading) {
+                    HStack {
+                        Text("Chapters per Day: \(chaptersPerDay)")
+                        Slider(value: Binding(get: { Double(chaptersPerDay) }, set: { chaptersPerDay = Int($0) }), in: 1...10, step: 1)
                     }
-                } else if goalType == .finishByDate {
+                    .disabled(goalType != .chaptersPerDay)
+                    Toggle("Customize per-day amounts", isOn: $useCustomPerDay)
+                    if useCustomPerDay {
+                        ForEach(allDays, id: \.self) { day in
+                            HStack {
+                                Text(day)
+                                Slider(value: Binding(get: { Double(customPerDay[day] ?? chaptersPerDay) }, set: { customPerDay[day] = Int($0) }), in: 0...10, step: 1)
+                                Text("\(customPerDay[day] ?? chaptersPerDay)")
+                            }
+                        }
+                    }
+                }
+
+                VStack(alignment: .leading) {
                     DatePicker("Finish By", selection: $finishBy, displayedComponents: .date)
                 }
+                .disabled(goalType != .finishByDate)
 
                 VStack(alignment: .leading) {
                     Text("Reading Days")
@@ -97,6 +136,15 @@ struct PlanCreatorView: View {
 
                 DatePicker("Start Date", selection: $startDate, displayedComponents: .date)
                 Toggle("Enable Notifications", isOn: $notificationsEnabled)
+                if notificationsEnabled {
+                    DatePicker("Notification Time", selection: $notificationTime, displayedComponents: .hourAndMinute)
+                    Toggle("Customize per-day times", isOn: $useCustomTimes)
+                    if useCustomTimes {
+                        ForEach(allDays, id: \.self) { day in
+                            DatePicker(day, selection: Binding(get: { customTimes[day] ?? notificationTime }, set: { customTimes[day] = $0 }), displayedComponents: .hourAndMinute)
+                        }
+                    }
+                }
 
                 VStack(alignment: .leading) {
                     Text("Estimated completion")
@@ -106,6 +154,14 @@ struct PlanCreatorView: View {
             }
             .padding()
         }
+        .background(
+            LinearGradient(
+                gradient: Gradient(colors: [Color.purple.opacity(0.2), Color.blue.opacity(0.1)]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+        )
         .navigationTitle(existingPlan == nil ? "Create Plan" : "Edit Plan")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -114,10 +170,13 @@ struct PlanCreatorView: View {
                         name: name,
                         startDate: startDate,
                         finishBy: goalType == .finishByDate ? finishBy : nil,
-                        chaptersPerDay: goalType == .chaptersPerDay ? chaptersPerDay : nil,
+                        chaptersPerDay: chaptersPerDay,
+                        chaptersPerDayByDay: useCustomPerDay ? customPerDay : nil,
                         readingDays: Array(readingDays),
                         allowNonLinear: allowNonLinear,
                         notificationsEnabled: notificationsEnabled,
+                        notificationTimeMinutes: notificationsEnabled ? PlanCreatorView.dateToMinutes(notificationTime) : nil,
+                        notificationTimesByDay: (notificationsEnabled && useCustomTimes) ? customTimes.mapValues { PlanCreatorView.dateToMinutes($0) } : nil,
                         goalType: goalType,
                         preset: preset,
                         nodes: []

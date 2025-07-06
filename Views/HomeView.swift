@@ -17,9 +17,14 @@ struct HomeView: View {
 
                             switch plan.goalType {
                             case .chaptersPerDay:
-                                let amount = plan.chaptersPerDay ?? 1
-                                Text("Goal: \(amount) chapters per day")
-                                    .font(.subheadline)
+                                if let custom = plan.chaptersPerDayByDay {
+                                    Text("Goal: variable chapters per day")
+                                        .font(.subheadline)
+                                } else {
+                                    let amount = plan.chaptersPerDay ?? 1
+                                    Text("Goal: \(amount) chapters per day")
+                                        .font(.subheadline)
+                                }
                             case .finishByDate:
                                 if let end = plan.finishBy {
                                     Text("Finish by \(end, style: .date)")
