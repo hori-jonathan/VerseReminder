@@ -11,13 +11,44 @@ struct HomeSettingsView: View {
         ("NLT", "fae20f318bf5bc7c-02")
     ]
 
+    @State private var fontSizeValue: Double = 1
+    @State private var spacingValue: Double = 1
+
+    private func sliderValue(for size: FontSizeOption) -> Double {
+        switch size {
+        case .small: return 0
+        case .medium: return 1
+        case .large: return 2
+        }
+    }
+
+    private func fontSize(for value: Double) -> FontSizeOption {
+        if value < 0.5 { return .small }
+        else if value < 1.5 { return .medium }
+        else { return .large }
+    }
+
+    private func sliderValue(for spacing: VerseSpacingOption) -> Double {
+        switch spacing {
+        case .compact: return 0
+        case .regular: return 1
+        case .roomy: return 2
+        }
+    }
+
+    private func spacingOption(for value: Double) -> VerseSpacingOption {
+        if value < 0.5 { return .compact }
+        else if value < 1.5 { return .regular }
+        else { return .roomy }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Settings")
+            Text("Quick Settings")
                 .font(.headline)
                 .padding(.bottom, 4)
 
-            VStack(spacing: 12) {
+            VStack(spacing: 20) {
                 Picker("Bible Version", selection: Binding(
                     get: { authViewModel.profile.bibleId },
                     set: { authViewModel.updateBibleId($0) })) {
@@ -27,41 +58,79 @@ struct HomeSettingsView: View {
                 }
                 .pickerStyle(.menu)
 
-                Picker("Font Size", selection: Binding(
-                    get: { authViewModel.profile.fontSize },
-                    set: { authViewModel.updateFontSize($0) })) {
-                    ForEach(FontSizeOption.allCases, id: \.self) { size in
-                        Text(size.rawValue.capitalized).tag(size)
+                VStack(alignment: .leading) {
+                    Text("Text Size")
+                        .font(.subheadline)
+                    Slider(value: $fontSizeValue, in: 0...2, step: 1) {
+                        Text("Text Size")
+                    } minimumValueLabel: {
+                        Text("A")
+                            .font(.footnote)
+                    } maximumValueLabel: {
+                        Text("A")
+                            .font(.title)
+                    }
+                    .onChange(of: fontSizeValue) { newValue in
+                        authViewModel.updateFontSize(fontSize(for: newValue))
                     }
                 }
-                .pickerStyle(.menu)
 
-                Picker("Font", selection: Binding(
-                    get: { authViewModel.profile.fontChoice },
-                    set: { authViewModel.updateFontChoice($0) })) {
-                    ForEach(FontChoice.allCases, id: \.self) { font in
-                        Text(font.rawValue.capitalized).tag(font)
+                VStack(alignment: .leading) {
+                    Text("Font Style")
+                        .font(.subheadline)
+                    HStack {
+                        ForEach(FontChoice.allCases, id: \.self) { choice in
+                            Button(action: {
+                                authViewModel.updateFontChoice(choice)
+                            }) {
+                                Text("Aa")
+                                    .font(choice.font(size: 20))
+                                    .padding(8)
+                                    .background(authViewModel.profile.fontChoice == choice ? Color.accentColor.opacity(0.2) : Color.clear)
+                                    .cornerRadius(8)
+                            }
+                        }
                     }
                 }
-                .pickerStyle(.menu)
 
-                Picker("Verse Spacing", selection: Binding(
-                    get: { authViewModel.profile.verseSpacing },
-                    set: { authViewModel.updateVerseSpacing($0) })) {
-                    ForEach(VerseSpacingOption.allCases, id: \.self) { space in
-                        Text(space.rawValue.capitalized).tag(space)
+                VStack(alignment: .leading) {
+                    Text("Verse Spacing")
+                        .font(.subheadline)
+                    Slider(value: $spacingValue, in: 0...2, step: 1) {
+                        Text("Spacing")
+                    }
+                    .onChange(of: spacingValue) { newValue in
+                        authViewModel.updateVerseSpacing(spacingOption(for: newValue))
                     }
                 }
-                .pickerStyle(.menu)
 
-                Picker("Theme", selection: Binding(
-                    get: { authViewModel.profile.theme },
-                    set: { authViewModel.updateTheme($0) })) {
-                    ForEach(AppTheme.allCases, id: \.self) { theme in
-                        Text(theme.name).tag(theme)
+                VStack(alignment: .leading) {
+                    Text("Theme")
+                        .font(.subheadline)
+                    HStack {
+                        ForEach(AppTheme.allCases, id: \.self) { theme in
+                            Button(action: {
+                                authViewModel.updateTheme(theme)
+                            }) {
+                                Circle()
+                                    .fill(theme.accentColor)
+                                    .frame(width: 28, height: 28)
+                                    .overlay(
+                                        Circle()
+                                            .stroke(Color.primary, lineWidth: authViewModel.profile.theme == theme ? 3 : 0)
+                                    )
+                            }
+                        }
                     }
                 }
-                .pickerStyle(.menu)
+
+                VStack(alignment: .leading) {
+                    Text("Preview")
+                        .font(.subheadline)
+                    Text("In the beginning God created the heavens and the earth.\nAnd the Spirit of God was hovering over the face of the waters.")
+                        .font(authViewModel.profile.fontChoice.font(size: authViewModel.profile.fontSize.pointSize))
+                        .lineSpacing(authViewModel.profile.verseSpacing.spacing)
+                }
             }
             .frame(maxWidth: .infinity)
             .padding()
@@ -69,7 +138,11 @@ struct HomeSettingsView: View {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(Color(.secondarySystemBackground))
             )
-        }
+            }
         .padding(.top)
+        .onAppear {
+            fontSizeValue = sliderValue(for: authViewModel.profile.fontSize)
+            spacingValue = sliderValue(for: authViewModel.profile.verseSpacing)
+        }
     }
 }
