@@ -82,7 +82,7 @@ struct ChapterView: View {
             } else {
                 ScrollViewReader { proxy in
                     ScrollView {
-                        LazyVStack(alignment: .leading, spacing: 6) {
+                        LazyVStack(alignment: .leading, spacing: authViewModel.profile.verseSpacing.spacing) {
                             ForEach(verses, id: \.id) { verse in
                                 VerseRowView(verse: verse, isHighlighted: verse.id == highlightedVerseId)
                                     .id(verse.id)
@@ -340,6 +340,7 @@ struct VerseRowView: View {
                 }
             }
             Text(verse.cleanedText)
+                .font(authViewModel.profile.fontChoice.font(size: authViewModel.profile.fontSize.pointSize))
         }
         .padding(.vertical, 2)
         .padding(.horizontal, 4)

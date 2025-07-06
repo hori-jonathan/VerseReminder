@@ -11,7 +11,7 @@ struct BookmarksView: View {
         NavigationView {
             List {
                 ForEach(verses, id: \.id) { verse in
-                    NavigationLink(destination: ChapterView(chapterId: referencePrefix(for: verse.id), bibleId: defaultBibleId, highlightVerse: Int(verse.verseNumber))) {
+                    NavigationLink(destination: ChapterView(chapterId: referencePrefix(for: verse.id), bibleId: authViewModel.profile.bibleId, highlightVerse: Int(verse.verseNumber))) {
                         VStack(alignment: .leading) {
                             Text(verse.reference)
                                 .font(.headline)
@@ -56,7 +56,7 @@ struct BookmarksView: View {
         verses = []
         let ids = authViewModel.profile.bookmarks
         for id in ids {
-            BibleAPI.shared.fetchVerse(reference: id) { result in
+            BibleAPI.shared.fetchVerse(reference: id, bibleId: authViewModel.profile.bibleId) { result in
                 if case .success(let verse) = result {
                     DispatchQueue.main.async {
                         verses.append(verse)
