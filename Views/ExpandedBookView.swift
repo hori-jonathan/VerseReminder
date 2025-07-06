@@ -106,7 +106,7 @@ struct ExpandedBookView: View {
     private func handleSearchResult(_ result: BibleSearchResult) {
         switch result.type {
         case .book:
-            booksNav.path.append(.expandedBook(result.book.id))
+            booksNav.path.append(BooksRoute.expandedBook(result.book.id))
             searchManager.clearSearch()
         case .chapter:
             onSelectChapter(result.book, result.chapter ?? 1)
