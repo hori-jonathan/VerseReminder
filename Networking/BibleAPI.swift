@@ -1,7 +1,9 @@
 import Foundation
 
-private let apiKey = "e2e982866bf5cf105210c33fd6513ed4"
-private let baseUrl = "https://api.scripture.api.bible/v1"
+// Configuration for the self-hosted Bible database API
+private let baseUrl = "http://66.179.211.114:4005"
+private let userId = "local-admin"
+private let centralPassword = "supersecret"
 
 struct Verse: Equatable {
     let reference: String
@@ -39,30 +41,49 @@ class BibleAPI {
 
     // MARK: - Fetch a single verse
     func fetchVerse(reference: String, bibleId: String = defaultBibleId, completion: @escaping (Result<Verse, BibleAPIError>) -> Void) {
-        let url = URL(string: "\(baseUrl)/bibles/\(bibleId)/verses/\(reference)")!
+        guard let url = URL(string: "\(baseUrl)/db/query") else {
+            completion(.failure(.requestFailed))
+            return
+        }
+
         var req = URLRequest(url: url)
-        req.addValue(apiKey, forHTTPHeaderField: "api-key")
+        req.httpMethod = "POST"
+        req.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.addValue(centralPassword, forHTTPHeaderField: "x-central-password")
+
+        let payload: [String: Any] = [
+            "user_id": userId,
+            "db_file": bibleId,
+            "sql": "SELECT * FROM verses WHERE id = '\(reference)';"
+        ]
+
+        do {
+            req.httpBody = try JSONSerialization.data(withJSONObject: payload)
+        } catch {
+            completion(.failure(.requestFailed))
+            return
+        }
 
         URLSession.shared.dataTask(with: req) { data, response, error in
             guard let data = data, error == nil else {
                 completion(.failure(.requestFailed))
                 return
             }
+
             do {
                 let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
                 guard
-                    let verseData = json?["data"] as? [String: Any],
+                    let rows = json?["rows"] as? [[String: Any]],
+                    let verseData = rows.first,
                     let content = verseData["content"] as? String,
                     let reference = verseData["reference"] as? String
                 else {
                     completion(.failure(.verseNotFound))
                     return
                 }
+
                 let id = verseData["id"] as? String ?? reference
-                let links = verseData["links"] as? [[String: Any]]
-                let contextLink = links?.first(where: { ($0["type"] as? String) == "html" })?["url"] as? String
-                let refURL = URL(string: contextLink ?? "")
-                let verse = Verse(reference: reference, content: content, contextURL: refURL, id: id)
+                let verse = Verse(reference: reference, content: content, contextURL: nil, id: id)
                 completion(.success(verse))
             } catch {
                 completion(.failure(.invalidResponse))

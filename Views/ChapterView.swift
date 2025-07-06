@@ -2,7 +2,8 @@ import SwiftUI
 
 struct ChapterView: View {
     let chapterId: String        // e.g. "GEN.1"
-    let bibleId: String          // e.g. "179568874c45066f-01"
+    // bibleId corresponds to the SQLite database file, e.g. "bible_kjv.sqlite"
+    let bibleId: String
     let highlightVerse: Int?
 
     @EnvironmentObject var authViewModel: AuthViewModel
