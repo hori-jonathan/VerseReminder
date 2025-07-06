@@ -7,6 +7,7 @@ struct ChapterView: View {
 
     @EnvironmentObject var authViewModel: AuthViewModel
     @EnvironmentObject var booksNav: BooksNavigationManager
+    @EnvironmentObject var tabManager: TabSelectionManager
     @Environment(\.dismiss) private var dismiss
     
     @State private var verses: [Verse] = []
@@ -122,9 +123,6 @@ struct ChapterView: View {
         }
         .onChange(of: authViewModel.profile.bibleId) { newId in
             searchManager.bibleId = newId
-        }
-        .onReceive(booksNav.$resetTrigger.dropFirst()) { _ in
-            dismiss()
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -297,7 +295,7 @@ struct ChapterView: View {
     }
 
     private func backToBooks() {
-        booksNav.popToRoot()
+        booksNav.popToRoot(tabManager: tabManager)
     }
 
     private func openExpandedBook() {

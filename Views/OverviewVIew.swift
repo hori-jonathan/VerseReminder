@@ -248,8 +248,6 @@ struct OverviewView: View {
     @State private var expandedBookId: String? = nil
     @EnvironmentObject var authViewModel: AuthViewModel
     @EnvironmentObject var booksNav: BooksNavigationManager
-    @State private var selectedChapter: (book: BibleBook, chapter: Int, verse: Int?)? = nil
-    @State private var selectedExpandedBook: BibleBook? = nil
     @State private var scrollTargetBookId: String? = nil
     @State private var showBookmarks = false
 
@@ -285,16 +283,12 @@ struct OverviewView: View {
                             chaptersBookmarked: chaptersBookmarked,
                             lastRead: lastRead,
                             onSelectChapter: { book, chapter in
-                                // When navigating directly to a chapter, clear
-                                // any active expanded book navigation
-                                selectedExpandedBook = nil
-                                selectedChapter = (book, chapter, nil)
+                                booksNav.path.append(
+                                    BooksRoute.chapter(bookId: book.id, chapter: chapter, highlight: nil)
+                                )
                             },
                             onExpandBook: { book in
-                                // Ensure chapter navigation is cleared so only the
-                                // expanded book view opens
-                                selectedChapter = nil
-                                selectedExpandedBook = book
+                                booksNav.path.append(.expandedBook(book.id))
                             }
                         )
                         TestamentSection(
@@ -305,15 +299,12 @@ struct OverviewView: View {
                             chaptersBookmarked: chaptersBookmarked,
                             lastRead: lastRead,
                             onSelectChapter: { book, chapter in
-                                // Clear expanded book navigation when moving to a chapter
-                                selectedExpandedBook = nil
-                                selectedChapter = (book, chapter, nil)
+                                booksNav.path.append(
+                                    BooksRoute.chapter(bookId: book.id, chapter: chapter, highlight: nil)
+                                )
                             },
                             onExpandBook: { book in
-                                // Clear any pending chapter navigation to avoid
-                                // triggering multiple links
-                                selectedChapter = nil
-                                selectedExpandedBook = book
+                                booksNav.path.append(.expandedBook(book.id))
                             }
                         )
                         }
@@ -341,43 +332,6 @@ struct OverviewView: View {
                     }
                 }
                 
-                // NavigationLink for chapter navigation
-                NavigationLink(
-                    destination: selectedChapter.map {
-                        ChapterView(
-                            chapterId: "\($0.book.id).\($0.chapter)",
-                            bibleId: authViewModel.profile.bibleId,
-                            highlightVerse: $0.verse
-                        )
-                    },
-                    isActive: Binding(
-                        get: { selectedChapter != nil },
-                        set: { if !$0 { selectedChapter = nil } }
-                    )
-                ) {
-                    EmptyView()
-                }
-
-                // NavigationLink for expanded book navigation
-                NavigationLink(
-                    destination: selectedExpandedBook.map { book in
-                        ExpandedBookView(
-                            book: book,
-                            searchManager: searchManager,
-                            chaptersRead: chaptersRead,
-                            chaptersBookmarked: chaptersBookmarked,
-                            lastRead: lastRead
-                        ) { b, chapter in
-                            selectedChapter = (b, chapter, nil)
-                        }
-                    },
-                    isActive: Binding(
-                        get: { selectedExpandedBook != nil },
-                        set: { if !$0 { selectedExpandedBook = nil } }
-                    )
-                ) {
-                    EmptyView()
-                }
         }
         .navigationTitle("Books")
         .navigationBarTitleDisplayMode(.large)
@@ -403,24 +357,21 @@ struct OverviewView: View {
     private func handleSearchResultSelection(_ result: BibleSearchResult) {
         switch result.type {
         case .book:
-            // Navigate to the expanded view for the selected book
-            // Ensure chapter navigation is cleared first
-            selectedChapter = nil
-            selectedExpandedBook = result.book
+            booksNav.path.append(.expandedBook(result.book.id))
             searchManager.clearSearch()
-            
         case .chapter:
-            // Navigate to specific chapter
-            // Clear any active expanded book view before navigating
-            selectedExpandedBook = nil
-            selectedChapter = (result.book, result.chapter ?? 1, nil)
+            booksNav.path.append(
+                BooksRoute.chapter(bookId: result.book.id,
+                                   chapter: result.chapter ?? 1,
+                                   highlight: nil)
+            )
             searchManager.clearSearch()
-
         case .verse:
-            // Navigate to chapter containing the verse
-            // Ensure only the chapter view is pushed
-            selectedExpandedBook = nil
-            selectedChapter = (result.book, result.chapter ?? 1, result.verse)
+            booksNav.path.append(
+                BooksRoute.chapter(bookId: result.book.id,
+                                   chapter: result.chapter ?? 1,
+                                   highlight: result.verse)
+            )
             searchManager.clearSearch()
         }
     }

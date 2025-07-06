@@ -3,6 +3,7 @@ import SwiftUI
 struct StudyView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @EnvironmentObject var booksNav: BooksNavigationManager
+    @EnvironmentObject var tabManager: TabSelectionManager
     @State private var bookmarkedVerses: [Verse] = []
 
     private var allBooks: [BibleBook] {
@@ -15,13 +16,14 @@ struct StudyView: View {
                 if !bookmarkedVerses.isEmpty {
                     Section(header: Text("Your Bookmarks")) {
                         ForEach(bookmarkedVerses, id: \.id) { verse in
-                            NavigationLink(
-                                destination: ChapterView(
-                                    chapterId: referencePrefix(for: verse.id),
-                                    bibleId: authViewModel.profile.bibleId,
-                                    highlightVerse: Int(verse.verseNumber)
+                            Button(action: {
+                                booksNav.openChapter(
+                                    bookId: String(verse.id.split(separator: ".")[0]),
+                                    chapter: Int(verse.id.split(separator: ".")[1]) ?? 1,
+                                    highlight: Int(verse.verseNumber),
+                                    tabManager: tabManager
                                 )
-                            ) {
+                            }) {
                                 VStack(alignment: .leading) {
                                     Text(verse.reference).font(.headline)
                                     Text(verse.cleanedText)
@@ -46,13 +48,14 @@ struct StudyView: View {
                     if let entries = grouped[book.id] {
                         Section(header: Text(book.name)) {
                             ForEach(entries) { entry in
-                                NavigationLink(
-                                    destination: ChapterView(
-                                        chapterId: entry.chapterId,
-                                        bibleId: authViewModel.profile.bibleId,
-                                        highlightVerse: entry.verse
+                                Button(action: {
+                                    booksNav.openChapter(
+                                        bookId: entry.bookId,
+                                        chapter: entry.chapter,
+                                        highlight: entry.verse,
+                                        tabManager: tabManager
                                     )
-                                ) {
+                                }) {
                                     VStack(alignment: .leading) {
                                         Text(entry.displayRef).font(.headline)
                                         Text(entry.text)
