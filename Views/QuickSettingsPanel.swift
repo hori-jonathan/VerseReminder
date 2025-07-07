@@ -42,88 +42,107 @@ struct QuickSettingsPanel: View {
         else { return .roomy }
     }
 
+    private var biblePicker: some View {
+        Picker("Bible Version", selection: Binding(
+            get: { authViewModel.profile.bibleId },
+            set: { authViewModel.updateBibleId($0) })) {
+            ForEach(bibleOptions, id: \.id) { opt in
+                Text(opt.name).tag(opt.id)
+            }
+        }
+        .pickerStyle(.menu)
+    }
+
+    private var textSizeSection: some View {
+        VStack(alignment: .leading) {
+            Text("Text Size")
+                .font(.subheadline)
+            Slider(value: $fontSizeValue, in: 0...2, step: 1) {
+                Text("Text Size")
+            } minimumValueLabel: {
+                Text("A").font(.footnote)
+            } maximumValueLabel: {
+                Text("A").font(.title)
+            }
+            .onChange(of: fontSizeValue) { newValue in
+                authViewModel.updateFontSize(fontSize(for: newValue))
+            }
+        }
+    }
+
+    private var fontStyleSection: some View {
+        VStack(alignment: .leading) {
+            Text("Font Style")
+                .font(.subheadline)
+            HStack {
+                ForEach(FontChoice.allCases, id: \.self) { choice in
+                    Button(action: {
+                        authViewModel.updateFontChoice(choice)
+                    }) {
+                        Text("Aa")
+                            .font(choice.font(size: 20))
+                            .padding(8)
+                            .background(authViewModel.profile.fontChoice == choice ? Color.accentColor.opacity(0.2) : Color.clear)
+                            .cornerRadius(8)
+                    }
+                }
+            }
+        }
+    }
+
+    private var verseSpacingSection: some View {
+        VStack(alignment: .leading) {
+            Text("Verse Spacing")
+                .font(.subheadline)
+            Slider(value: $spacingValue, in: 0...2, step: 1) {
+                Text("Spacing")
+            }
+            .onChange(of: spacingValue) { newValue in
+                authViewModel.updateVerseSpacing(spacingOption(for: newValue))
+            }
+        }
+    }
+
+    private var themeSection: some View {
+        VStack(alignment: .leading) {
+            Text("Theme")
+                .font(.subheadline)
+            HStack {
+                ForEach(AppTheme.allCases, id: \.self) { theme in
+                    Button(action: {
+                        authViewModel.updateTheme(theme)
+                    }) {
+                        Circle()
+                            .fill(theme.accentColor)
+                            .frame(width: 28, height: 28)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.primary, lineWidth: authViewModel.profile.theme == theme ? 3 : 0)
+                            )
+                    }
+                }
+            }
+        }
+    }
+
+    private var previewSection: some View {
+        VStack(alignment: .leading) {
+            Text("Preview")
+                .font(.subheadline)
+            Text("In the beginning God created the heavens and the earth.\nAnd the Spirit of God was hovering over the face of the waters.")
+                .font(authViewModel.profile.fontChoice.font(size: authViewModel.profile.fontSize.pointSize))
+                .lineSpacing(authViewModel.profile.verseSpacing.spacing)
+        }
+    }
+
     var body: some View {
         VStack(spacing: 20) {
-            Picker("Bible Version", selection: Binding(
-                get: { authViewModel.profile.bibleId },
-                set: { authViewModel.updateBibleId($0) })) {
-                ForEach(bibleOptions, id: \.id) { opt in
-                    Text(opt.name).tag(opt.id)
-                }
-            }
-            .pickerStyle(.menu)
-
-            VStack(alignment: .leading) {
-                Text("Text Size")
-                    .font(.subheadline)
-                Slider(value: $fontSizeValue, in: 0...2, step: 1) {
-                    Text("Text Size")
-                } minimumValueLabel: {
-                    Text("A").font(.footnote)
-                } maximumValueLabel: {
-                    Text("A").font(.title)
-                }
-                .onChange(of: fontSizeValue) { newValue in
-                    authViewModel.updateFontSize(fontSize(for: newValue))
-                }
-            }
-
-            VStack(alignment: .leading) {
-                Text("Font Style")
-                    .font(.subheadline)
-                HStack {
-                    ForEach(FontChoice.allCases, id: .self) { choice in
-                        Button(action: {
-                            authViewModel.updateFontChoice(choice)
-                        }) {
-                            Text("Aa")
-                                .font(choice.font(size: 20))
-                                .padding(8)
-                                .background(authViewModel.profile.fontChoice == choice ? Color.accentColor.opacity(0.2) : Color.clear)
-                                .cornerRadius(8)
-                        }
-                    }
-                }
-            }
-
-            VStack(alignment: .leading) {
-                Text("Verse Spacing")
-                    .font(.subheadline)
-                Slider(value: $spacingValue, in: 0...2, step: 1) {
-                    Text("Spacing")
-                }
-                .onChange(of: spacingValue) { newValue in
-                    authViewModel.updateVerseSpacing(spacingOption(for: newValue))
-                }
-            }
-
-            VStack(alignment: .leading) {
-                Text("Theme")
-                    .font(.subheadline)
-                HStack {
-                    ForEach(AppTheme.allCases, id: .self) { theme in
-                        Button(action: {
-                            authViewModel.updateTheme(theme)
-                        }) {
-                            Circle()
-                                .fill(theme.accentColor)
-                                .frame(width: 28, height: 28)
-                                .overlay(
-                                    Circle()
-                                        .stroke(Color.primary, lineWidth: authViewModel.profile.theme == theme ? 3 : 0)
-                                )
-                        }
-                    }
-                }
-            }
-
-            VStack(alignment: .leading) {
-                Text("Preview")
-                    .font(.subheadline)
-                Text("In the beginning God created the heavens and the earth.\nAnd the Spirit of God was hovering over the face of the waters.")
-                    .font(authViewModel.profile.fontChoice.font(size: authViewModel.profile.fontSize.pointSize))
-                    .lineSpacing(authViewModel.profile.verseSpacing.spacing)
-            }
+            biblePicker
+            textSizeSection
+            fontStyleSection
+            verseSpacingSection
+            themeSection
+            previewSection
         }
         .frame(maxWidth: .infinity)
         .padding()
