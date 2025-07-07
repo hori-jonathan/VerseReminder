@@ -20,8 +20,8 @@ struct HomeView: View {
 
                             switch plan.goalType {
                             case .chaptersPerDay:
-                                if let custom = plan.chaptersPerDayByDay {
-                                    Text("Goal: variable chapters per day")
+                                if let _ = plan.chaptersPerDayByDay {
+                                    Text(plan.readingDaysMessage)
                                         .font(.subheadline)
                                 } else {
                                     let amount = plan.chaptersPerDay ?? 1

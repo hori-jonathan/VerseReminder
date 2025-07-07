@@ -204,3 +204,34 @@ extension ReadingPlan {
     }
 }
 
+extension ReadingPlan {
+    /// Short textual summary of the reading schedule using three letter day abbreviations.
+    var readingDaysMessage: String {
+        let all = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
+        let set = Set(readingDays)
+        let reading = all.filter { set.contains($0) }
+        let skipping = all.filter { !set.contains($0) }
+
+        func list(_ days: [String], plural: Bool, useOr: Bool) -> String {
+            guard !days.isEmpty else { return "" }
+            let names = days.map { plural ? "\($0)s" : $0 }
+            if names.count == 1 {
+                return names[0]
+            } else if names.count == 2 {
+                return names[0] + (useOr ? " or " : " and ") + names[1]
+            } else {
+                let last = names.last!
+                let firstPart = names.dropLast().joined(separator: ", ")
+                return firstPart + ", " + (useOr ? "or " : "and ") + last
+            }
+        }
+
+        if reading.count == 7 {
+            return "Read the bible every day"
+        }
+        let onMsg = "Read the bible on " + list(reading, plural: true, useOr: false)
+        let offMsg = "Read the bible everyday but " + list(skipping, plural: false, useOr: true)
+        return onMsg.count <= offMsg.count ? onMsg : offMsg
+    }
+}
+
