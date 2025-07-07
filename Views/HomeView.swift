@@ -91,6 +91,7 @@ struct HomeView: View {
                         }
                     }
                     HomeSettingsView()
+                    DonateSectionView()
                     Spacer()
                 }
                 .padding()
