@@ -168,7 +168,6 @@ struct PlanCreatorView: View {
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
-            .ignoresSafeArea()
         )
         .navigationTitle(existingPlan == nil ? "Create Plan" : "Edit Plan")
         .toolbar {
