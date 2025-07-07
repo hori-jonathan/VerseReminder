@@ -97,10 +97,9 @@ struct FirstTimeSetupView: View {
                         Text("Reading Plan")
                             .font(.headline)
 
-                        Stepper("Chapters per Day: \(chaptersPerDay)", value: $chaptersPerDay, in: 1...10)
                         HStack {
-                            Button("All +1") { chaptersPerDay += 1; for d in allDays { customPerDay[d] = (customPerDay[d] ?? chaptersPerDay) + 1 } }
-                            Button("All -1") { chaptersPerDay = max(1, chaptersPerDay - 1); for d in allDays { customPerDay[d] = max(0,(customPerDay[d] ?? chaptersPerDay) - 1) } }
+                            Button("+1") { chaptersPerDay += 1; for d in allDays { customPerDay[d] = (customPerDay[d] ?? chaptersPerDay) + 1 } }
+                            Button("-1") { chaptersPerDay = max(1, chaptersPerDay - 1); for d in allDays { customPerDay[d] = max(0,(customPerDay[d] ?? chaptersPerDay) - 1) } }
                         }
 
                         DayPillarsView(values: $customPerDay, defaultValue: chaptersPerDay)
@@ -110,22 +109,35 @@ struct FirstTimeSetupView: View {
 
                         Toggle("Enable Notifications", isOn: $notificationsEnabled)
                         if notificationsEnabled {
-                            ForEach(notificationTimes.indices, id: \.self) { idx in
-                                HStack {
-                                    DatePicker("Time \(idx + 1)", selection: $notificationTimes[idx], displayedComponents: .hourAndMinute)
-                                    Button {
-                                        notificationTimes.remove(at: idx)
-                                    } label: {
-                                        Image(systemName: "minus.circle").foregroundColor(.red)
+                            VStack(spacing: 8) {
+                                ForEach(notificationTimes.indices, id: \.self) { idx in
+                                    HStack {
+                                        DatePicker("Time \(idx + 1)", selection: $notificationTimes[idx], displayedComponents: .hourAndMinute)
+                                            .labelsHidden()
+                                        Spacer()
+                                        Button(action: { notificationTimes.remove(at: idx) }) {
+                                            Image(systemName: "trash.fill")
+                                                .foregroundColor(.red)
+                                        }
+                                    }
+                                    .padding(.horizontal)
+                                    .padding(.vertical, 8)
+                                    .background(Color(.secondarySystemBackground))
+                                    .cornerRadius(10)
+                                }
+                                Button(action: {
+                                    notificationTimes.append(Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: Date()) ?? Date())
+                                }) {
+                                    HStack {
+                                        Image(systemName: "plus.circle.fill")
+                                        Text("Add Time")
                                     }
                                 }
-                            }
-                            Button("Add Time") {
-                                notificationTimes.append(Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: Date()) ?? Date())
+                                .padding(.top, 4)
                             }
                         }
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                     .padding(.bottom)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -194,12 +206,14 @@ struct DayPillarsView: View {
     private let days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
 
     var body: some View {
-        HStack(alignment: .bottom, spacing: 8) {
+        HStack(alignment: .bottom, spacing: 12) {
             ForEach(days, id: \.self) { day in
                 VStack {
+                    let val = values[day] ?? defaultValue
+                    let color = Color(hue: max(0.0, 0.33 - Double(val)/60.0), saturation: 0.8, brightness: 0.9)
                     Rectangle()
-                        .fill(Color.accentColor.opacity(0.7))
-                        .frame(width: 20, height: CGFloat(values[day] ?? defaultValue) * 12)
+                        .fill(color)
+                        .frame(width: 30, height: CGFloat(val) * 16)
                         .gesture(
                             DragGesture()
                                 .onEnded { value in

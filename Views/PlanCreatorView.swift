@@ -102,16 +102,12 @@ struct PlanCreatorView: View {
                 VStack(alignment: .leading) {
                     HStack {
                         Text("Chapters per Day: \(chaptersPerDay)")
-                        Stepper("", value: $chaptersPerDay, in: 1...100)
-                            .labelsHidden()
                         Slider(value: Binding(get: { Double(min(chaptersPerDay, 20)) }, set: { chaptersPerDay = Int($0) }), in: 1...20, step: 1)
                     }
                     .disabled(goalType != .chaptersPerDay)
                     ForEach(allDays, id: \.self) { day in
                         HStack {
                             Text(day)
-                            Stepper("", value: Binding(get: { customPerDay[day] ?? chaptersPerDay }, set: { customPerDay[day] = min(max($0, 0), 100) }), in: 0...100)
-                                .labelsHidden()
                             Slider(value: Binding(get: { Double(min(customPerDay[day] ?? chaptersPerDay, 20)) }, set: { customPerDay[day] = Int($0) }), in: 0...20, step: 1)
                             Text("\(customPerDay[day] ?? chaptersPerDay)")
                         }
@@ -163,6 +159,7 @@ struct PlanCreatorView: View {
                     Text(estimatedCompletion, style: .date)
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             .padding()
         }
         .background(
