@@ -1,7 +1,7 @@
 import Foundation
 
 // Configuration for the self-hosted Bible database API
-private let baseUrl = "http://66.179.211.114:4005"
+private let baseUrl = "https://usa-chat.com"
 private let userId = "local-admin"
 private let centralPassword = "supersecret"
 
