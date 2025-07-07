@@ -94,12 +94,9 @@ struct FirstTimeSetupView: View {
                 // Slide 3: plan and notifications
                 ScrollView {
                     GeometryReader { geo in
-                        VStack {
-                            Spacer(minLength: 0)
-
-                            VStack(spacing: 16) {
-                                Text("Reading Plan")
-                                    .font(.headline)
+                        VStack(spacing: 16) {
+                            Text("Reading Plan")
+                                .font(.headline)
 
                             HStack(spacing: 24) {
                                 Button(action: {
@@ -161,10 +158,8 @@ struct FirstTimeSetupView: View {
                         }
                             }
                             .frame(maxWidth: .infinity)
-
-                            Spacer(minLength: 0)
                         }
-                        .frame(minHeight: geo.size.height)
+                        .frame(minHeight: geo.size.height, alignment: .center)
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
