@@ -3,13 +3,18 @@ import FirebaseAuth
 
 struct RootView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
+    @AppStorage("setupComplete") private var setupComplete = false
 
     var body: some View {
         Group {
             if authViewModel.isLoading {
                 ProgressView()
             } else if authViewModel.user != nil {
-                ContentView()
+                if setupComplete {
+                    ContentView()
+                } else {
+                    FirstTimeSetupView()
+                }
             } else {
                 VStack {
                     Text("Unable to sign in")

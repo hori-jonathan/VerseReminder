@@ -244,4 +244,12 @@ class AuthViewModel: ObservableObject {
         saveProfile()
     }
 
+    /// Reset all stored user data and mark setup as incomplete.
+    func resetAccount() {
+        profile = UserProfile()
+        saveProfile()
+        UserDefaults.standard.set(false, forKey: "setupComplete")
+    }
+
 }
+
