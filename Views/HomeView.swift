@@ -58,9 +58,15 @@ struct HomeView: View {
                                 Text("Today's Progress")
                                     .font(.headline)
                                 DailyProgressCircle(progress: Double(read) / Double(goal))
-                                Text("You've read \(read) of \(goal) chapters today")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
+                                if read >= goal {
+                                    Text("Today's goal completed!")
+                                        .font(.subheadline)
+                                        .foregroundColor(.purple)
+                                } else {
+                                    Text("You've read \(read) of \(goal) chapters today")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                }
                                 if read < goal, let last = lastReadReference() {
                                     Button(action: {
                                         let parts = last.ref.split(separator: ".")
