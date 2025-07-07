@@ -31,9 +31,9 @@ struct UserProfile {
          chapterNotes: [String: String] = [:],
          verseNotes: [String: [String: String]] = [:],
          bibleId: String = defaultBibleId,
-         fontSize: FontSizeOption = .medium,
+         fontSize: FontSizeOption = FontSizeOption(),
          fontChoice: FontChoice = .system,
-         verseSpacing: VerseSpacingOption = .regular,
+         verseSpacing: VerseSpacingOption = VerseSpacingOption(),
          theme: AppTheme = .light) {
         self.chaptersRead = chaptersRead
         self.chaptersBookmarked = chaptersBookmarked
@@ -67,9 +67,11 @@ extension UserProfile {
         let chapterNotes = dict["chapterNotes"] as? [String: String] ?? [:]
         let verseNotes = dict["verseNotes"] as? [String: [String: String]] ?? [:]
         let bibleId = dict["bibleId"] as? String ?? defaultBibleId
-        let fontSize = FontSizeOption(rawValue: dict["fontSize"] as? String ?? FontSizeOption.medium.rawValue) ?? .medium
+        let fontSizeVal = dict["fontSize"] as? Double ?? 17
+        let fontSize = FontSizeOption(value: fontSizeVal)
         let fontChoice = FontChoice(rawValue: dict["fontChoice"] as? String ?? FontChoice.system.rawValue) ?? .system
-        let verseSpacing = VerseSpacingOption(rawValue: dict["verseSpacing"] as? String ?? VerseSpacingOption.regular.rawValue) ?? .regular
+        let verseSpacingVal = dict["verseSpacing"] as? Double ?? 8
+        let verseSpacing = VerseSpacingOption(value: verseSpacingVal)
         let theme = AppTheme(rawValue: dict["theme"] as? String ?? AppTheme.light.rawValue) ?? .light
         self.init(chaptersRead: chaptersRead, chaptersBookmarked: chaptersBookmarked, lastRead: lastRead, readingPlan: plan, bookmarks: bookmarks, lastReadBookId: lastBook, dailyChapterCounts: dailyCounts, chapterNotes: chapterNotes, verseNotes: verseNotes, bibleId: bibleId, fontSize: fontSize, fontChoice: fontChoice, verseSpacing: verseSpacing, theme: theme)
     }
@@ -84,9 +86,9 @@ extension UserProfile {
             "chapterNotes": chapterNotes,
             "verseNotes": verseNotes,
             "bibleId": bibleId,
-            "fontSize": fontSize.rawValue,
+            "fontSize": fontSize.value,
             "fontChoice": fontChoice.rawValue,
-            "verseSpacing": verseSpacing.rawValue,
+            "verseSpacing": verseSpacing.value,
             "theme": theme.rawValue
         ]
         if let plan = readingPlan {
