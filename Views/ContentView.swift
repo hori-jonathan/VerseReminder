@@ -10,6 +10,8 @@ struct ContentView: View {
             TabView(selection: $tabManager.selection) {
                 // Home tab
                 HomeView()
+                    .opacity(tabManager.selection == .home ? 1 : 0)
+                    .animation(.easeInOut(duration: 0.3), value: tabManager.selection)
                     .tabItem {
                         Image(systemName: "house")
                         Text("Home")
@@ -52,6 +54,8 @@ struct ContentView: View {
                     }
                     .environmentObject(booksNavigationManager)
                 }
+                .opacity(tabManager.selection == .books ? 1 : 0)
+                .animation(.easeInOut(duration: 0.3), value: tabManager.selection)
                 .tabItem {
                     Image(systemName: "book.closed")
                     Text("Books")
@@ -59,6 +63,8 @@ struct ContentView: View {
                 .tag(AppTab.books)
 
                 StudyView()
+                    .opacity(tabManager.selection == .study ? 1 : 0)
+                    .animation(.easeInOut(duration: 0.3), value: tabManager.selection)
                     .environmentObject(booksNavigationManager)
                     .tabItem {
                         Image(systemName: "books.vertical")

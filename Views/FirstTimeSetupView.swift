@@ -18,7 +18,6 @@ struct FirstTimeSetupView: View {
 
     @State private var selectedBible: String = defaultBibleId
     @State private var chaptersPerDay: Int = 1
-    @State private var useCustomPerDay: Bool = false
     @State private var customPerDay: [String: Int] = [:]
     @State private var notificationsEnabled: Bool = false
     @State private var notificationTimes: [Date] = [
@@ -32,8 +31,8 @@ struct FirstTimeSetupView: View {
 
     private var estimatedCompletion: Date {
         let plan = ReadingPlan(
-            chaptersPerDay: useCustomPerDay ? nil : chaptersPerDay,
-            chaptersPerDayByDay: useCustomPerDay ? customPerDay : nil,
+            chaptersPerDay: nil,
+            chaptersPerDayByDay: customPerDay,
             notificationsEnabled: notificationsEnabled,
             notificationTimeMinutes: (notificationsEnabled && notificationTimes.count == 1) ?
                 PlanCreatorView.dateToMinutes(notificationTimes[0]) : nil,
@@ -51,7 +50,7 @@ struct FirstTimeSetupView: View {
             TabView(selection: $page) {
                 // Slide 0: welcome
                 VStack(spacing: 24) {
-                    Text("Welcome to VerseReminder")
+                    (Text("Welcome to ") + Text("VerseReminder").foregroundColor(.purple))
                         .font(.largeTitle).bold()
                         .opacity(showWelcome ? 1 : 0)
                         .onAppear { showWelcome = true }
@@ -76,7 +75,7 @@ struct FirstTimeSetupView: View {
                 .tag(1)
 
                 // Slide 2: bible version
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(spacing: 16) {
                     Text("Bible Version")
                         .font(.headline)
                     Picker("Bible", selection: $selectedBible) {
@@ -86,6 +85,7 @@ struct FirstTimeSetupView: View {
                     }
                     .pickerStyle(.wheel)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding()
                 .opacity(showBible ? 1 : 0)
                 .onAppear { showBible = true }
@@ -93,7 +93,7 @@ struct FirstTimeSetupView: View {
 
                 // Slide 3: plan and notifications
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
+                    VStack(spacing: 16) {
                         Text("Reading Plan")
                             .font(.headline)
 
@@ -103,10 +103,7 @@ struct FirstTimeSetupView: View {
                             Button("All -1") { chaptersPerDay = max(1, chaptersPerDay - 1); for d in allDays { customPerDay[d] = max(0,(customPerDay[d] ?? chaptersPerDay) - 1) } }
                         }
 
-                        Toggle("Customize per-day", isOn: $useCustomPerDay)
-                        if useCustomPerDay {
-                            DayPillarsView(values: $customPerDay, defaultValue: chaptersPerDay)
-                        }
+                        DayPillarsView(values: $customPerDay, defaultValue: chaptersPerDay)
 
                         Text("Estimated completion: \(estimatedCompletion, style: .date)")
                             .font(.subheadline)
@@ -128,8 +125,10 @@ struct FirstTimeSetupView: View {
                             }
                         }
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .padding(.bottom)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding()
                 .opacity(showPlan ? 1 : 0)
                 .onAppear { showPlan = true }
@@ -152,8 +151,8 @@ struct FirstTimeSetupView: View {
             .onAppear {
                 selectedBible = authViewModel.profile.bibleId
                 chaptersPerDay = authViewModel.profile.readingPlan?.chaptersPerDay ?? 1
-                customPerDay = authViewModel.profile.readingPlan?.chaptersPerDayByDay ?? [:]
-                useCustomPerDay = !customPerDay.isEmpty
+                customPerDay = authViewModel.profile.readingPlan?.chaptersPerDayByDay ??
+                    Dictionary(uniqueKeysWithValues: allDays.map { ($0, chaptersPerDay) })
                 notificationsEnabled = authViewModel.profile.readingPlan?.notificationsEnabled ?? false
                 if let mins = authViewModel.profile.readingPlan?.notificationTimeMinutes {
                     notificationTimes = [PlanCreatorView.minutesToDate(mins)]
@@ -171,8 +170,8 @@ struct FirstTimeSetupView: View {
     private func save() {
         authViewModel.updateBibleId(selectedBible)
         let plan = ReadingPlan(
-            chaptersPerDay: useCustomPerDay ? nil : chaptersPerDay,
-            chaptersPerDayByDay: useCustomPerDay ? customPerDay : nil,
+            chaptersPerDay: nil,
+            chaptersPerDayByDay: customPerDay,
             notificationsEnabled: notificationsEnabled,
             notificationTimeMinutes: (notificationsEnabled && notificationTimes.count == 1) ?
                 PlanCreatorView.dateToMinutes(notificationTimes[0]) : nil,
@@ -219,6 +218,7 @@ struct DayPillarsView: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity)
         .animation(.default, value: values)
     }
 }
