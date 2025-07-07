@@ -4,6 +4,7 @@ import FirebaseAuth
 struct SettingsView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @State private var showSignInSheet = false
+    @State private var showReset = false
 
     var body: some View {
         List {
@@ -18,10 +19,22 @@ struct SettingsView: View {
                     }
                 }
             }
+            Section {
+                Button(role: .destructive) {
+                    showReset = true
+                } label: {
+                    Text("Reset Account")
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
+            }
         }
         .navigationTitle("Settings")
         .sheet(isPresented: $showSignInSheet) {
             SignInOptionsView()
+                .environmentObject(authViewModel)
+        }
+        .sheet(isPresented: $showReset) {
+            ResetAccountView()
                 .environmentObject(authViewModel)
         }
     }
