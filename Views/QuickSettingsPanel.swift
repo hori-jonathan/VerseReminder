@@ -83,7 +83,7 @@ struct QuickSettingsPanel: View {
         VStack(alignment: .leading) {
             Text("Preview")
                 .font(.subheadline)
-            Text(previewVerse?.content.stripHTML() ?? "Loading...")
+            Text(previewVerse?.content.stripHTML().trimmingLeadingParagraphSymbol() ?? "Loading...")
                 .font(authViewModel.profile.fontChoice.font(size: authViewModel.profile.fontSize.pointSize))
                 .lineSpacing(authViewModel.profile.verseSpacing.spacing)
         }

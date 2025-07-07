@@ -109,11 +109,20 @@ struct PlanCreatorView: View {
                 }
 
                 VStack(alignment: .leading) {
-                    HStack {
-                        Text("Chapters per Day: \(chaptersPerDay)")
-                        Slider(value: Binding(get: { Double(min(chaptersPerDay, 20)) }, set: { chaptersPerDay = Int($0) }), in: 1...20, step: 1)
+                    if existingPlan == nil {
+                        HStack {
+                            Text("Chapters per Day: \(chaptersPerDay)")
+                            Slider(
+                                value: Binding(
+                                    get: { Double(min(chaptersPerDay, 20)) },
+                                    set: { chaptersPerDay = Int($0) }
+                                ),
+                                in: 1...20,
+                                step: 1
+                            )
+                        }
+                        .disabled(goalType != .chaptersPerDay)
                     }
-                    .disabled(goalType != .chaptersPerDay)
                     ForEach(allDays, id: \.self) { day in
                         HStack {
                             Text(day)
@@ -207,11 +216,8 @@ struct PlanCreatorView: View {
             }
             if existingPlan != nil {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button(role: .destructive) {
-                        authViewModel.deleteReadingPlan()
+                    Button("Close") {
                         dismiss()
-                    } label: {
-                        Text("Delete")
                     }
                 }
             }

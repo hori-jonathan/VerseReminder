@@ -6,7 +6,8 @@ extension Verse {
     }
 
     var cleanedText: String {
-        let stripped = content.stripHTML().trimmingCharacters(in: .whitespacesAndNewlines)
+        var stripped = content.stripHTML().trimmingCharacters(in: .whitespacesAndNewlines)
+        stripped = stripped.trimmingLeadingParagraphSymbol()
         if let num = Int(verseNumber), stripped.hasPrefix("\(num) ") {
             return String(stripped.dropFirst("\(num) ".count))
         } else if let num = Int(verseNumber), stripped.hasPrefix("\(num)") {
