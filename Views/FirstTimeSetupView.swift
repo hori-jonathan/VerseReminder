@@ -10,8 +10,11 @@ struct FirstTimeSetupView: View {
         ("American Standard Version", "bible_asv.sqlite"),
         ("Darby Bible", "bible_dby.sqlite"),
         ("King James Version", "bible_kjv.sqlite"),
-        ("Wycliffe Bible", "bible_wyc.sqlite")
+        ("Wycliffe Bible", "bible_wyc.sqlite"),
+        ("New International Version", "bible_niv.sqlite")
     ]
+
+    private let previewRefs = ["GEN.1.1", "PSA.23.1", "MAT.5.9", "JHN.3.16", "ROM.8.28"]
 
     private let allDays = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
 
@@ -27,6 +30,8 @@ struct FirstTimeSetupView: View {
     @State private var showQuick = false
     @State private var showBible = false
     @State private var showPlan = false
+    @State private var previewVerses: [String: [Verse]] = [:]
+    @State private var loadingPreviews = false
 
     private var estimatedCompletion: Date {
         let plan = ReadingPlan(
@@ -84,11 +89,27 @@ struct FirstTimeSetupView: View {
                         }
                     }
                     .pickerStyle(.wheel)
+
+                    if let verses = previewVerses[selectedBible], !verses.isEmpty {
+                        VStack(alignment: .leading, spacing: 4) {
+                            ForEach(verses, id: \.id) { v in
+                                Text(v.cleanedText)
+                                    .font(.footnote)
+                            }
+                        }
+                        .padding(.top, 8)
+                    } else if loadingPreviews {
+                        ProgressView()
+                            .padding(.top, 8)
+                    }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding()
                 .opacity(showBible ? 1 : 0)
-                .onAppear { showBible = true }
+                .onAppear {
+                    showBible = true
+                    loadPreviews()
+                }
                 .tag(2)
 
                 // Slide 3: plan and notifications -- CENTERED! (no border, no shadow)
@@ -169,6 +190,22 @@ struct FirstTimeSetupView: View {
         authViewModel.setReadingPlan(plan)
         authViewModel.saveProfile()
         setupComplete = true
+    }
+
+    private func loadPreviews() {
+        guard !loadingPreviews else { return }
+        loadingPreviews = true
+        for option in bibleOptions {
+            for ref in previewRefs {
+                BibleAPI.shared.fetchVerse(reference: ref, bibleId: option.id) { result in
+                    DispatchQueue.main.async {
+                        if case .success(let verse) = result {
+                            previewVerses[option.id, default: []].append(verse)
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
