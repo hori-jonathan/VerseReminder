@@ -1,14 +1,9 @@
 import SwiftUI
 
-enum FontSizeOption: String, CaseIterable, Codable {
-    case small, medium, large
-    var pointSize: CGFloat {
-        switch self {
-        case .small: return 14
-        case .medium: return 17
-        case .large: return 20
-        }
-    }
+/// Continuous font size stored as a raw value in points.
+struct FontSizeOption: Codable {
+    var value: Double = 17
+    var pointSize: CGFloat { CGFloat(value) }
 }
 
 enum FontChoice: String, CaseIterable, Codable {
@@ -22,15 +17,10 @@ enum FontChoice: String, CaseIterable, Codable {
     }
 }
 
-enum VerseSpacingOption: String, CaseIterable, Codable {
-    case compact, regular, roomy
-    var spacing: CGFloat {
-        switch self {
-        case .compact: return 4
-        case .regular: return 8
-        case .roomy: return 14
-        }
-    }
+/// Continuous verse spacing stored as a raw value of points between lines.
+struct VerseSpacingOption: Codable {
+    var value: Double = 8
+    var spacing: CGFloat { CGFloat(value) }
 }
 
 enum AppTheme: String, CaseIterable, Codable {

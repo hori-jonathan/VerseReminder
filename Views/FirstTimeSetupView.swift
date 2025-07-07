@@ -25,6 +25,10 @@ struct FirstTimeSetupView: View {
         Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: Date()) ?? Date()
     ]
     @State private var page = 0
+    @State private var showWelcome = false
+    @State private var showQuick = false
+    @State private var showBible = false
+    @State private var showPlan = false
 
     private var estimatedCompletion: Date {
         let plan = ReadingPlan(
@@ -45,17 +49,33 @@ struct FirstTimeSetupView: View {
     var body: some View {
         NavigationView {
             TabView(selection: $page) {
-                // Slide 0: quick settings
+                // Slide 0: welcome
                 VStack(spacing: 24) {
                     Text("Welcome to VerseReminder")
                         .font(.largeTitle).bold()
-                    QuickSettingsPanel(showBiblePicker: false)
-                        .environmentObject(authViewModel)
+                        .opacity(showWelcome ? 1 : 0)
+                        .onAppear { showWelcome = true }
+                    Text("Swipe to continue")
+                        .font(.headline)
+                        .opacity(showWelcome ? 1 : 0)
                 }
-                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .tag(0)
 
-                // Slide 1: bible version
+                // Slide 1: quick settings
+                VStack(spacing: 16) {
+                    Text("UI Preferences")
+                        .font(.headline)
+                        .opacity(0.7)
+                    QuickSettingsPanel(showBiblePicker: false)
+                        .environmentObject(authViewModel)
+                        .opacity(showQuick ? 1 : 0)
+                        .onAppear { showQuick = true }
+                }
+                .padding()
+                .tag(1)
+
+                // Slide 2: bible version
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Bible Version")
                         .font(.headline)
@@ -67,15 +87,21 @@ struct FirstTimeSetupView: View {
                     .pickerStyle(.wheel)
                 }
                 .padding()
-                .tag(1)
+                .opacity(showBible ? 1 : 0)
+                .onAppear { showBible = true }
+                .tag(2)
 
-                // Slide 2: plan and notifications
+                // Slide 3: plan and notifications
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Reading Plan")
                             .font(.headline)
 
                         Stepper("Chapters per Day: \(chaptersPerDay)", value: $chaptersPerDay, in: 1...10)
+                        HStack {
+                            Button("All +1") { chaptersPerDay += 1; for d in allDays { customPerDay[d] = (customPerDay[d] ?? chaptersPerDay) + 1 } }
+                            Button("All -1") { chaptersPerDay = max(1, chaptersPerDay - 1); for d in allDays { customPerDay[d] = max(0,(customPerDay[d] ?? chaptersPerDay) - 1) } }
+                        }
 
                         Toggle("Customize per-day", isOn: $useCustomPerDay)
                         if useCustomPerDay {
@@ -88,7 +114,14 @@ struct FirstTimeSetupView: View {
                         Toggle("Enable Notifications", isOn: $notificationsEnabled)
                         if notificationsEnabled {
                             ForEach(notificationTimes.indices, id: \.self) { idx in
-                                DatePicker("Time \(idx + 1)", selection: $notificationTimes[idx], displayedComponents: .hourAndMinute)
+                                HStack {
+                                    DatePicker("Time \(idx + 1)", selection: $notificationTimes[idx], displayedComponents: .hourAndMinute)
+                                    Button {
+                                        notificationTimes.remove(at: idx)
+                                    } label: {
+                                        Image(systemName: "minus.circle").foregroundColor(.red)
+                                    }
+                                }
                             }
                             Button("Add Time") {
                                 notificationTimes.append(Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: Date()) ?? Date())
@@ -98,7 +131,9 @@ struct FirstTimeSetupView: View {
                     .padding(.bottom)
                 }
                 .padding()
-                .tag(2)
+                .opacity(showPlan ? 1 : 0)
+                .onAppear { showPlan = true }
+                .tag(3)
             }
             .tabViewStyle(PageTabViewStyle())
             .navigationBarTitle("Setup", displayMode: .inline)
@@ -107,7 +142,7 @@ struct FirstTimeSetupView: View {
                     if page > 0 { Button("Back") { page -= 1 } }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    if page < 2 {
+                    if page < 3 {
                         Button("Next") { page += 1 }
                     } else {
                         Button("Finish") { save() }
@@ -128,6 +163,7 @@ struct FirstTimeSetupView: View {
                         if let val = times[key] { return PlanCreatorView.minutesToDate(val) } else { return nil }
                     }
                 }
+                showWelcome = true
             }
         }
     }
@@ -165,8 +201,17 @@ struct DayPillarsView: View {
                     Rectangle()
                         .fill(Color.accentColor.opacity(0.7))
                         .frame(width: 20, height: CGFloat(values[day] ?? defaultValue) * 12)
+                        .gesture(
+                            DragGesture()
+                                .onEnded { value in
+                                    let delta = Int(-value.translation.height / 20)
+                                    let current = values[day] ?? defaultValue
+                                    let newVal = max(0, current + delta)
+                                    values[day] = newVal
+                                }
+                        )
                         .onTapGesture {
-                            let newVal = ((values[day] ?? defaultValue) % 10) + 1
+                            let newVal = (values[day] ?? defaultValue) + 1
                             values[day] = newVal
                         }
                     Text(String(day.prefix(3)))

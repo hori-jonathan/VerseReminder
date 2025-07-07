@@ -13,36 +13,8 @@ struct QuickSettingsPanel: View {
         ("Wycliffe Bible", "bible_wyc.sqlite")
     ]
 
-    @State private var fontSizeValue: Double = 1
-    @State private var spacingValue: Double = 1
-
-    private func sliderValue(for size: FontSizeOption) -> Double {
-        switch size {
-        case .small: return 0
-        case .medium: return 1
-        case .large: return 2
-        }
-    }
-
-    private func fontSize(for value: Double) -> FontSizeOption {
-        if value < 0.5 { return .small }
-        else if value < 1.5 { return .medium }
-        else { return .large }
-    }
-
-    private func sliderValue(for spacing: VerseSpacingOption) -> Double {
-        switch spacing {
-        case .compact: return 0
-        case .regular: return 1
-        case .roomy: return 2
-        }
-    }
-
-    private func spacingOption(for value: Double) -> VerseSpacingOption {
-        if value < 0.5 { return .compact }
-        else if value < 1.5 { return .regular }
-        else { return .roomy }
-    }
+    @State private var fontSizeValue: Double = 17
+    @State private var spacingValue: Double = 8
 
     private var biblePicker: some View {
         Picker("Bible Version", selection: Binding(
@@ -59,7 +31,7 @@ struct QuickSettingsPanel: View {
         VStack(alignment: .leading) {
             Text("Text Size")
                 .font(.subheadline)
-            Slider(value: $fontSizeValue, in: 0...2, step: 1) {
+            Slider(value: $fontSizeValue, in: 14...24, step: 1) {
                 Text("Text Size")
             } minimumValueLabel: {
                 Text("A").font(.footnote)
@@ -67,7 +39,7 @@ struct QuickSettingsPanel: View {
                 Text("A").font(.title)
             }
             .onChange(of: fontSizeValue) { newValue in
-                authViewModel.updateFontSize(fontSize(for: newValue))
+                authViewModel.updateFontSize(FontSizeOption(value: newValue))
             }
         }
     }
@@ -96,11 +68,11 @@ struct QuickSettingsPanel: View {
         VStack(alignment: .leading) {
             Text("Verse Spacing")
                 .font(.subheadline)
-            Slider(value: $spacingValue, in: 0...2, step: 1) {
+            Slider(value: $spacingValue, in: 4...16, step: 1) {
                 Text("Spacing")
             }
             .onChange(of: spacingValue) { newValue in
-                authViewModel.updateVerseSpacing(spacingOption(for: newValue))
+                authViewModel.updateVerseSpacing(VerseSpacingOption(value: newValue))
             }
         }
     }
@@ -155,8 +127,8 @@ struct QuickSettingsPanel: View {
                 .fill(Color(.secondarySystemBackground))
         )
         .onAppear {
-            fontSizeValue = sliderValue(for: authViewModel.profile.fontSize)
-            spacingValue = sliderValue(for: authViewModel.profile.verseSpacing)
+            fontSizeValue = authViewModel.profile.fontSize.value
+            spacingValue = authViewModel.profile.verseSpacing.value
         }
     }
 }
