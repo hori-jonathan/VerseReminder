@@ -10,7 +10,8 @@ struct QuickSettingsPanel: View {
         ("American Standard Version", "bible_asv.sqlite"),
         ("Darby Bible", "bible_dby.sqlite"),
         ("King James Version", "bible_kjv.sqlite"),
-        ("Wycliffe Bible", "bible_wyc.sqlite")
+        ("Wycliffe Bible", "bible_wyc.sqlite"),
+        ("New International Version", "bible_niv.sqlite")
     ]
 
     @State private var fontSizeValue: Double = 17
