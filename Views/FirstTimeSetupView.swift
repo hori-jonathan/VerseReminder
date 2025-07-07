@@ -93,13 +93,33 @@ struct FirstTimeSetupView: View {
 
                 // Slide 3: plan and notifications
                 ScrollView {
-                    VStack(spacing: 16) {
-                        Text("Reading Plan")
-                            .font(.headline)
+                    GeometryReader { geo in
+                        VStack(spacing: 16) {
+                            Text("Reading Plan")
+                                .font(.headline)
 
-                        HStack {
-                            Button("+1") { chaptersPerDay += 1; for d in allDays { customPerDay[d] = (customPerDay[d] ?? chaptersPerDay) + 1 } }
-                            Button("-1") { chaptersPerDay = max(1, chaptersPerDay - 1); for d in allDays { customPerDay[d] = max(0,(customPerDay[d] ?? chaptersPerDay) - 1) } }
+                        HStack(spacing: 24) {
+                            Button(action: {
+                                chaptersPerDay = min(10, chaptersPerDay + 1)
+                                for d in allDays {
+                                    let current = customPerDay[d] ?? chaptersPerDay
+                                    customPerDay[d] = min(10, current + 1)
+                                }
+                            }) {
+                                Label("+1", systemImage: "plus.circle.fill")
+                            }
+                            .buttonStyle(.bordered)
+
+                            Button(action: {
+                                chaptersPerDay = max(1, chaptersPerDay - 1)
+                                for d in allDays {
+                                    let current = customPerDay[d] ?? chaptersPerDay
+                                    customPerDay[d] = max(0, current - 1)
+                                }
+                            }) {
+                                Label("-1", systemImage: "minus.circle.fill")
+                            }
+                            .buttonStyle(.bordered)
                         }
 
                         DayPillarsView(values: $customPerDay, defaultValue: chaptersPerDay)
@@ -136,9 +156,11 @@ struct FirstTimeSetupView: View {
                                 .padding(.top, 4)
                             }
                         }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(minHeight: geo.size.height, alignment: .center)
+                        .padding(.bottom)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                    .padding(.bottom)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding()
@@ -209,7 +231,7 @@ struct DayPillarsView: View {
         HStack(alignment: .bottom, spacing: 12) {
             ForEach(days, id: \.self) { day in
                 VStack {
-                    let val = values[day] ?? defaultValue
+                    let val = min(values[day] ?? defaultValue, 10)
                     let color = Color(hue: max(0.0, 0.33 - Double(val)/60.0), saturation: 0.8, brightness: 0.9)
                     Rectangle()
                         .fill(color)
@@ -220,12 +242,12 @@ struct DayPillarsView: View {
                                     let delta = Int(-value.translation.height / 20)
                                     let current = values[day] ?? defaultValue
                                     let newVal = max(0, current + delta)
-                                    values[day] = newVal
+                                    values[day] = min(10, newVal)
                                 }
                         )
                         .onTapGesture {
                             let newVal = (values[day] ?? defaultValue) + 1
-                            values[day] = newVal
+                            values[day] = min(10, newVal)
                         }
                     Text(String(day.prefix(3)))
                         .font(.caption2)
