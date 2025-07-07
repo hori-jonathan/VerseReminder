@@ -94,12 +94,15 @@ struct FirstTimeSetupView: View {
                 // Slide 3: plan and notifications
                 ScrollView {
                     GeometryReader { geo in
-                        VStack(spacing: 16) {
-                            Text("Reading Plan")
-                                .font(.headline)
+                        VStack {
+                            Spacer(minLength: 0)
 
-                        HStack(spacing: 24) {
-                            Button(action: {
+                            VStack(spacing: 16) {
+                                Text("Reading Plan")
+                                    .font(.headline)
+
+                            HStack(spacing: 24) {
+                                Button(action: {
                                 chaptersPerDay = min(10, chaptersPerDay + 1)
                                 for d in allDays {
                                     let current = customPerDay[d] ?? chaptersPerDay
@@ -156,10 +159,12 @@ struct FirstTimeSetupView: View {
                                 .padding(.top, 4)
                             }
                         }
+                            }
+                            .frame(maxWidth: .infinity)
+
+                            Spacer(minLength: 0)
                         }
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: geo.size.height, alignment: .center)
-                        .padding(.bottom)
+                        .frame(minHeight: geo.size.height)
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
