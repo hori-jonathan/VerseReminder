@@ -3,12 +3,14 @@ import SwiftUI
 struct QuickSettingsPanel: View {
     @EnvironmentObject var authViewModel: AuthViewModel
 
+    var showBiblePicker: Bool = true
+
     private let bibleOptions: [(name: String, id: String)] = [
-        ("DRA", "bible_dra.sqlite"),
-        ("ASV", "bible_asv.sqlite"),
-        ("DBY", "bible_dby.sqlite"),
-        ("KJV", "bible_kjv.sqlite"),
-        ("WYC", "bible_wyc.sqlite")
+        ("Douay-Rheims", "bible_dra.sqlite"),
+        ("American Standard Version", "bible_asv.sqlite"),
+        ("Darby Bible", "bible_dby.sqlite"),
+        ("King James Version", "bible_kjv.sqlite"),
+        ("Wycliffe Bible", "bible_wyc.sqlite")
     ]
 
     @State private var fontSizeValue: Double = 1
@@ -137,7 +139,9 @@ struct QuickSettingsPanel: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            biblePicker
+            if showBiblePicker {
+                biblePicker
+            }
             textSizeSection
             fontStyleSection
             verseSpacingSection
