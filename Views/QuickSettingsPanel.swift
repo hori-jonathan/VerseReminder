@@ -10,12 +10,12 @@ struct QuickSettingsPanel: View {
         ("American Standard Version", "bible_asv.sqlite"),
         ("Darby Bible", "bible_dby.sqlite"),
         ("King James Version", "bible_kjv.sqlite"),
-        ("Wycliffe Bible", "bible_wyc.sqlite"),
-        ("New International Version", "bible_niv.sqlite")
+        ("Wycliffe Bible", "bible_wyc.sqlite")
     ]
 
     @State private var fontSizeValue: Double = 17
     @State private var spacingValue: Double = 8
+    @State private var previewVerse: Verse?
 
     private var biblePicker: some View {
         Picker("Bible Version", selection: Binding(
@@ -78,33 +78,12 @@ struct QuickSettingsPanel: View {
         }
     }
 
-    private var themeSection: some View {
-        VStack(alignment: .leading) {
-            Text("Theme")
-                .font(.subheadline)
-            HStack {
-                ForEach(AppTheme.allCases, id: \.self) { theme in
-                    Button(action: {
-                        authViewModel.updateTheme(theme)
-                    }) {
-                        Circle()
-                            .fill(theme.accentColor)
-                            .frame(width: 28, height: 28)
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.primary, lineWidth: authViewModel.profile.theme == theme ? 3 : 0)
-                            )
-                    }
-                }
-            }
-        }
-    }
 
     private var previewSection: some View {
         VStack(alignment: .leading) {
             Text("Preview")
                 .font(.subheadline)
-            Text("In the beginning God created the heavens and the earth.\nAnd the Spirit of God was hovering over the face of the waters.")
+            Text(previewVerse?.content.stripHTML() ?? "Loading...")
                 .font(authViewModel.profile.fontChoice.font(size: authViewModel.profile.fontSize.pointSize))
                 .lineSpacing(authViewModel.profile.verseSpacing.spacing)
         }
@@ -118,7 +97,6 @@ struct QuickSettingsPanel: View {
             textSizeSection
             fontStyleSection
             verseSpacingSection
-            themeSection
             previewSection
         }
         .frame(maxWidth: .infinity)
@@ -130,6 +108,20 @@ struct QuickSettingsPanel: View {
         .onAppear {
             fontSizeValue = authViewModel.profile.fontSize.value
             spacingValue = authViewModel.profile.verseSpacing.value
+            loadPreviewVerse()
+        }
+        .onChange(of: authViewModel.profile.bibleId) { _ in
+            loadPreviewVerse()
+        }
+    }
+
+    private func loadPreviewVerse() {
+        BibleAPI.shared.fetchVerse(reference: "JHN.3.16", bibleId: authViewModel.profile.bibleId) { result in
+            DispatchQueue.main.async {
+                if case .success(let verse) = result {
+                    self.previewVerse = verse
+                }
+            }
         }
     }
 }

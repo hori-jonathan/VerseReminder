@@ -15,7 +15,7 @@ attempt again.
 ## Features
 
 - Home screen summarizes your reading progress
-- Quick Settings panel with sliders and live previews for text size, spacing and theme
+- Quick Settings panel with sliders and live previews for text size, spacing and Bible version
 - Browse Bible books and chapters
 - Read verses with an API-based loader
 - Smart search for books, chapters, and verses with fuzzy matching and colored results

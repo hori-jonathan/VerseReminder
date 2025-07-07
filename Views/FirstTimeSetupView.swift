@@ -10,15 +10,13 @@ struct FirstTimeSetupView: View {
         ("American Standard Version", "bible_asv.sqlite"),
         ("Darby Bible", "bible_dby.sqlite"),
         ("King James Version", "bible_kjv.sqlite"),
-        ("Wycliffe Bible", "bible_wyc.sqlite"),
-        ("New International Version", "bible_niv.sqlite")
+        ("Wycliffe Bible", "bible_wyc.sqlite")
     ]
-
-    private let previewRefs = ["GEN.1.1", "PSA.23.1", "MAT.5.9", "JHN.3.16", "ROM.8.28"]
 
     private let allDays = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
 
     @State private var selectedBible: String = defaultBibleId
+    @State private var selectedTheme: AppTheme = .light
     @State private var chaptersPerDay: Int = 1
     @State private var customPerDay: [String: Int] = [:]
     @State private var notificationsEnabled: Bool = false
@@ -27,11 +25,9 @@ struct FirstTimeSetupView: View {
     ]
     @State private var page = 0
     @State private var showWelcome = false
+    @State private var showTheme = false
     @State private var showQuick = false
-    @State private var showBible = false
     @State private var showPlan = false
-    @State private var previewVerses: [String: [Verse]] = [:]
-    @State private var loadingPreviews = false
 
     private var estimatedCompletion: Date {
         let plan = ReadingPlan(
@@ -65,52 +61,43 @@ struct FirstTimeSetupView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .tag(0)
 
-                // Slide 1: quick settings
+                // Slide 1: Theme
+                VStack(spacing: 16) {
+                    Text("App Theme")
+                        .font(.headline)
+                    Picker("Theme", selection: $selectedTheme) {
+                        ForEach(AppTheme.allCases, id: \.self) { theme in
+                            Text(theme.name).tag(theme)
+                        }
+                    }
+                    .pickerStyle(.wheel)
+                    .onChange(of: selectedTheme) { newTheme in
+                        authViewModel.updateTheme(newTheme)
+                    }
+                }
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .opacity(showTheme ? 1 : 0)
+                .onAppear {
+                    showTheme = true
+                    selectedTheme = authViewModel.profile.theme
+                }
+                .tag(1)
+
+                // Slide 2: UI preferences
                 VStack(spacing: 16) {
                     Text("UI Preferences")
                         .font(.headline)
                         .opacity(0.7)
-                    QuickSettingsPanel(showBiblePicker: false)
+                    QuickSettingsPanel()
                         .environmentObject(authViewModel)
                         .opacity(showQuick ? 1 : 0)
                         .onAppear { showQuick = true }
                 }
                 .padding()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .tag(1)
-
-                // Slide 2: bible version
-                VStack(spacing: 16) {
-                    Text("Bible Version")
-                        .font(.headline)
-                    Picker("Bible", selection: $selectedBible) {
-                        ForEach(bibleOptions, id: \.id) { opt in
-                            Text(opt.name).tag(opt.id)
-                        }
-                    }
-                    .pickerStyle(.wheel)
-
-                    if let verses = previewVerses[selectedBible], !verses.isEmpty {
-                        VStack(alignment: .leading, spacing: 4) {
-                            ForEach(verses, id: \.id) { v in
-                                Text(v.cleanedText)
-                                    .font(.footnote)
-                            }
-                        }
-                        .padding(.top, 8)
-                    } else if loadingPreviews {
-                        ProgressView()
-                            .padding(.top, 8)
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding()
-                .opacity(showBible ? 1 : 0)
-                .onAppear {
-                    showBible = true
-                    loadPreviews()
-                }
                 .tag(2)
+
 
                 // Slide 3: plan and notifications -- CENTERED! (no border, no shadow)
                 ScrollView {
@@ -156,6 +143,7 @@ struct FirstTimeSetupView: View {
             }
             .onAppear {
                 selectedBible = authViewModel.profile.bibleId
+                selectedTheme = authViewModel.profile.theme
                 chaptersPerDay = authViewModel.profile.readingPlan?.chaptersPerDay ?? 1
                 customPerDay = authViewModel.profile.readingPlan?.chaptersPerDayByDay ??
                     Dictionary(uniqueKeysWithValues: allDays.map { ($0, chaptersPerDay) })
@@ -175,6 +163,7 @@ struct FirstTimeSetupView: View {
 
     private func save() {
         authViewModel.updateBibleId(selectedBible)
+        authViewModel.updateTheme(selectedTheme)
         let plan = ReadingPlan(
             chaptersPerDay: nil,
             chaptersPerDayByDay: customPerDay,
@@ -192,21 +181,6 @@ struct FirstTimeSetupView: View {
         setupComplete = true
     }
 
-    private func loadPreviews() {
-        guard !loadingPreviews else { return }
-        loadingPreviews = true
-        for option in bibleOptions {
-            for ref in previewRefs {
-                BibleAPI.shared.fetchVerse(reference: ref, bibleId: option.id) { result in
-                    DispatchQueue.main.async {
-                        if case .success(let verse) = result {
-                            previewVerses[option.id, default: []].append(verse)
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
 
 /// Factored out to avoid type-check timeouts in the big view tree!
