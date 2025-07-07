@@ -7,6 +7,7 @@ struct HomeView: View {
 
     @State private var showPlanCreator = false
     @State private var editingPlan: ReadingPlan? = nil
+    @State private var showReset = false
 
     var body: some View {
         NavigationView {
@@ -92,6 +93,13 @@ struct HomeView: View {
                     }
                     HomeSettingsView()
                     DonateSectionView()
+                    Button(role: .destructive) {
+                        showReset = true
+                    } label: {
+                        Text("Reset Account")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
                     Spacer()
                 }
                 .padding()
@@ -102,6 +110,10 @@ struct HomeView: View {
             }
             .sheet(item: $editingPlan) { plan in
                 NavigationView { PlanCreatorView(existingPlan: plan) }
+            }
+            .sheet(isPresented: $showReset) {
+                ResetAccountView()
+                    .environmentObject(authViewModel)
             }
         }
     }
