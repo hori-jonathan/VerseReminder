@@ -116,7 +116,7 @@ struct QuickSettingsPanel: View {
     }
 
     private func loadPreviewVerse() {
-        BibleAPI.shared.fetchVerse(reference: "JHN.3.16", bibleId: authViewModel.profile.bibleId) { result in
+        BibleAPI.shared.fetchVerse(reference: "JOH.3.16", bibleId: authViewModel.profile.bibleId) { result in
             DispatchQueue.main.async {
                 if case .success(let verse) = result {
                     self.previewVerse = verse
