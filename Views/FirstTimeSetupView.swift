@@ -65,14 +65,26 @@ struct FirstTimeSetupView: View {
                 VStack(spacing: 16) {
                     Text("App Theme")
                         .font(.headline)
-                    Picker("Theme", selection: $selectedTheme) {
-                        ForEach(AppTheme.allCases, id: \.self) { theme in
-                            Text(theme.name).tag(theme)
+                    HStack(spacing: 20) {
+                        ForEach([AppTheme.light, AppTheme.dark], id: \.self) { theme in
+                            Button(action: {
+                                selectedTheme = theme
+                                authViewModel.updateTheme(theme)
+                            }) {
+                                VStack {
+                                    Image(systemName: theme == .light ? "sun.max.fill" : "moon.stars.fill")
+                                        .font(.largeTitle)
+                                        .padding(.bottom, 8)
+                                    Text(theme.name)
+                                        .font(.headline)
+                                }
+                                .frame(maxWidth: .infinity, minHeight: 100)
+                                .padding()
+                                .background(selectedTheme == theme ? Color.accentColor.opacity(0.2) : Color(.secondarySystemBackground))
+                                .cornerRadius(12)
+                            }
+                            .buttonStyle(.plain)
                         }
-                    }
-                    .pickerStyle(.wheel)
-                    .onChange(of: selectedTheme) { newTheme in
-                        authViewModel.updateTheme(newTheme)
                     }
                 }
                 .padding()

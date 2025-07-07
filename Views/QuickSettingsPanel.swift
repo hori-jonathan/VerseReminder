@@ -105,7 +105,7 @@ struct QuickSettingsPanel: View {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(Color(.secondarySystemBackground))
         )
-        .onAppear {
+        .task {
             fontSizeValue = authViewModel.profile.fontSize.value
             spacingValue = authViewModel.profile.verseSpacing.value
             loadPreviewVerse()
