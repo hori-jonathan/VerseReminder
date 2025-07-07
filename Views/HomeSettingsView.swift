@@ -3,6 +3,7 @@ import SwiftUI
 struct HomeSettingsView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @State private var selectedTheme: AppTheme = .light
+    @State private var themeCheckTask: DispatchWorkItem?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -39,7 +40,13 @@ struct HomeSettingsView: View {
             }
         }
         .onAppear {
-            selectedTheme = authViewModel.profile.theme
+            themeCheckTask?.cancel()
+            let task = DispatchWorkItem { selectedTheme = authViewModel.profile.theme }
+            themeCheckTask = task
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: task)
+        }
+        .onChange(of: authViewModel.profile.theme) { newTheme in
+            selectedTheme = newTheme
         }
         .padding(.top)
     }

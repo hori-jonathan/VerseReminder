@@ -5,6 +5,7 @@ struct StudyView: View {
     @EnvironmentObject var booksNav: BooksNavigationManager
     @EnvironmentObject var tabManager: TabSelectionManager
     @State private var bookmarkedVerses: [Verse] = []
+    @State private var animateTutorial = false
 
     private var allBooks: [BibleBook] {
         (oldTestamentCategories + newTestamentCategories).flatMap { $0.books }
@@ -13,6 +14,41 @@ struct StudyView: View {
     var body: some View {
         NavigationView {
             List {
+                let notes = noteEntries()
+                if bookmarkedVerses.isEmpty && notes.isEmpty {
+                    Section {
+                        VStack(spacing: 16) {
+                            Text("Your notes and bookmarks appear here")
+                                .font(.headline)
+                                .multilineTextAlignment(.center)
+                                .frame(maxWidth: .infinity)
+                            HStack(spacing: 40) {
+                                VStack(spacing: 8) {
+                                    Image(systemName: "bookmark.fill")
+                                        .font(.largeTitle)
+                                        .scaleEffect(animateTutorial ? 1.2 : 1.0)
+                                        .animation(.easeInOut(duration: 1).repeatForever(autoreverses: true), value: animateTutorial)
+                                    Text("Tap the bookmark icon while reading to save verses.")
+                                        .font(.footnote)
+                                        .multilineTextAlignment(.center)
+                                }
+                                VStack(spacing: 8) {
+                                    Image(systemName: "square.and.pencil")
+                                        .font(.largeTitle)
+                                        .scaleEffect(animateTutorial ? 1.2 : 1.0)
+                                        .animation(.easeInOut(duration: 1).repeatForever(autoreverses: true), value: animateTutorial)
+                                    Text("Tap a verse to add a note.")
+                                        .font(.footnote)
+                                        .multilineTextAlignment(.center)
+                                }
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 40)
+                        .onAppear { animateTutorial = true }
+                    }
+                }
+
                 if !bookmarkedVerses.isEmpty {
                     Section(header: Text("Your Bookmarks")) {
                         ForEach(bookmarkedVerses, id: \.id) { verse in
@@ -42,7 +78,6 @@ struct StudyView: View {
                     }
                 }
 
-                let notes = noteEntries()
                 let grouped = Dictionary(grouping: notes) { $0.bookId }
                 ForEach(allBooks.filter { grouped[$0.id] != nil }.sorted { $0.order < $1.order }, id: \.id) { book in
                     if let entries = grouped[book.id] {
