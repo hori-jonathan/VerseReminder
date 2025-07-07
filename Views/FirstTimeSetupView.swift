@@ -5,7 +5,6 @@ struct FirstTimeSetupView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @AppStorage("setupComplete") private var setupComplete = false
 
-    // Full translation names used across the app
     private let bibleOptions: [(name: String, id: String)] = [
         ("Douay-Rheims", "bible_dra.sqlite"),
         ("American Standard Version", "bible_asv.sqlite"),
@@ -72,6 +71,7 @@ struct FirstTimeSetupView: View {
                         .onAppear { showQuick = true }
                 }
                 .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .tag(1)
 
                 // Slide 2: bible version
@@ -91,79 +91,30 @@ struct FirstTimeSetupView: View {
                 .onAppear { showBible = true }
                 .tag(2)
 
-                // Slide 3: plan and notifications
+                // Slide 3: plan and notifications -- CENTERED! (no border, no shadow)
                 ScrollView {
-                    GeometryReader { geo in
-                        VStack(spacing: 16) {
-                            Text("Reading Plan")
-                                .font(.headline)
-
-                            HStack(spacing: 24) {
-                                Button(action: {
-                                chaptersPerDay = min(10, chaptersPerDay + 1)
-                                for d in allDays {
-                                    let current = customPerDay[d] ?? chaptersPerDay
-                                    customPerDay[d] = min(10, current + 1)
-                                }
-                            }) {
-                                Label("+1", systemImage: "plus.circle.fill")
-                            }
-                            .buttonStyle(.bordered)
-
-                            Button(action: {
-                                chaptersPerDay = max(1, chaptersPerDay - 1)
-                                for d in allDays {
-                                    let current = customPerDay[d] ?? chaptersPerDay
-                                    customPerDay[d] = max(0, current - 1)
-                                }
-                            }) {
-                                Label("-1", systemImage: "minus.circle.fill")
-                            }
-                            .buttonStyle(.bordered)
-                        }
-
-                        DayPillarsView(values: $customPerDay, defaultValue: chaptersPerDay)
-
-                        Text("Estimated completion: \(estimatedCompletion, style: .date)")
-                            .font(.subheadline)
-
-                        Toggle("Enable Notifications", isOn: $notificationsEnabled)
-                        if notificationsEnabled {
-                            VStack(spacing: 8) {
-                                ForEach(notificationTimes.indices, id: \.self) { idx in
-                                    HStack {
-                                        DatePicker("Time \(idx + 1)", selection: $notificationTimes[idx], displayedComponents: .hourAndMinute)
-                                            .labelsHidden()
-                                        Spacer()
-                                        Button(action: { notificationTimes.remove(at: idx) }) {
-                                            Image(systemName: "trash.fill")
-                                                .foregroundColor(.red)
-                                        }
-                                    }
-                                    .padding(.horizontal)
-                                    .padding(.vertical, 8)
-                                    .background(Color(.secondarySystemBackground))
-                                    .cornerRadius(10)
-                                }
-                                Button(action: {
-                                    notificationTimes.append(Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: Date()) ?? Date())
-                                }) {
-                                    HStack {
-                                        Image(systemName: "plus.circle.fill")
-                                        Text("Add Time")
-                                    }
-                                }
-                                .padding(.top, 4)
-                            }
-                        }
-                            }
-                            .frame(maxWidth: .infinity)
-                        }
-                        .frame(minHeight: geo.size.height, alignment: .center)
+                    VStack {
+                        Spacer(minLength: 0)
+                        PlanAndNotificationsSection(
+                            allDays: allDays,
+                            chaptersPerDay: $chaptersPerDay,
+                            customPerDay: $customPerDay,
+                            estimatedCompletion: estimatedCompletion,
+                            notificationsEnabled: $notificationsEnabled,
+                            notificationTimes: $notificationTimes
+                        )
+                        .padding()
+                        Spacer(minLength: 0)
                     }
+                    .frame(
+                        maxWidth: .infinity,
+                        minHeight: UIScreen.main.bounds.height * 0.72,
+                        maxHeight: .infinity,
+                        alignment: .center
+                    )
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding()
+                .background(Color(.systemBackground))
                 .opacity(showPlan ? 1 : 0)
                 .onAppear { showPlan = true }
                 .tag(3)
@@ -221,6 +172,85 @@ struct FirstTimeSetupView: View {
     }
 }
 
+/// Factored out to avoid type-check timeouts in the big view tree!
+struct PlanAndNotificationsSection: View {
+    let allDays: [String]
+    @Binding var chaptersPerDay: Int
+    @Binding var customPerDay: [String: Int]
+    var estimatedCompletion: Date
+    @Binding var notificationsEnabled: Bool
+    @Binding var notificationTimes: [Date]
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Text("Reading Plan")
+                .font(.headline)
+
+            HStack(spacing: 24) {
+                Button(action: {
+                    chaptersPerDay = min(10, chaptersPerDay + 1)
+                    for d in allDays {
+                        let current = customPerDay[d] ?? chaptersPerDay
+                        customPerDay[d] = min(10, current + 1)
+                    }
+                }) {
+                    Label("+1", systemImage: "plus.circle.fill")
+                }
+                .buttonStyle(.bordered)
+
+                Button(action: {
+                    chaptersPerDay = max(1, chaptersPerDay - 1)
+                    for d in allDays {
+                        let current = customPerDay[d] ?? chaptersPerDay
+                        customPerDay[d] = max(0, current - 1)
+                    }
+                }) {
+                    Label("-1", systemImage: "minus.circle.fill")
+                }
+                .buttonStyle(.bordered)
+            }
+
+            DayPillarsView(values: $customPerDay, defaultValue: chaptersPerDay)
+
+            Text("Estimated completion: \(estimatedCompletion, style: .date)")
+                .font(.subheadline)
+
+            Toggle("Enable Notifications", isOn: $notificationsEnabled)
+            if notificationsEnabled {
+                VStack(spacing: 8) {
+                    ForEach(notificationTimes.indices, id: \.self) { idx in
+                        HStack {
+                            DatePicker("Time \(idx + 1)", selection: $notificationTimes[idx], displayedComponents: .hourAndMinute)
+                                .labelsHidden()
+                            Spacer()
+                            Button(action: { notificationTimes.remove(at: idx) }) {
+                                Image(systemName: "trash.fill")
+                                    .foregroundColor(.red)
+                            }
+                        }
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
+                        .background(Color(.secondarySystemBackground))
+                        .cornerRadius(10)
+                    }
+                    Button(action: {
+                        notificationTimes.append(Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: Date()) ?? Date())
+                    }) {
+                        HStack {
+                            Image(systemName: "plus.circle.fill")
+                            Text("Add Time")
+                        }
+                    }
+                    .padding(.top, 4)
+                }
+            }
+        }
+        .frame(maxWidth: 400)
+        .padding()
+        // .background and .shadow REMOVED for flush look!
+    }
+}
+
 /// Simple column chart to adjust per-day chapter counts.
 struct DayPillarsView: View {
     @Binding var values: [String: Int]
@@ -230,32 +260,43 @@ struct DayPillarsView: View {
     var body: some View {
         HStack(alignment: .bottom, spacing: 12) {
             ForEach(days, id: \.self) { day in
-                VStack {
-                    let val = min(values[day] ?? defaultValue, 10)
-                    let color = Color(hue: max(0.0, 0.33 - Double(val)/60.0), saturation: 0.8, brightness: 0.9)
-                    Rectangle()
-                        .fill(color)
-                        .frame(width: 30, height: CGFloat(val) * 16)
-                        .gesture(
-                            DragGesture()
-                                .onEnded { value in
-                                    let delta = Int(-value.translation.height / 20)
-                                    let current = values[day] ?? defaultValue
-                                    let newVal = max(0, current + delta)
-                                    values[day] = min(10, newVal)
-                                }
-                        )
-                        .onTapGesture {
-                            let newVal = (values[day] ?? defaultValue) + 1
-                            values[day] = min(10, newVal)
-                        }
-                    Text(String(day.prefix(3)))
-                        .font(.caption2)
-                }
+                DayPillar(
+                    day: day,
+                    value: values[day] ?? defaultValue,
+                    onChange: { newVal in values[day] = min(10, max(0, newVal)) }
+                )
             }
         }
         .frame(maxWidth: .infinity)
         .animation(.default, value: values)
+    }
+}
+
+struct DayPillar: View {
+    let day: String
+    let value: Int
+    let onChange: (Int) -> Void
+
+    var body: some View {
+        let color = Color(hue: max(0.0, 0.33 - Double(value)/60.0), saturation: 0.8, brightness: 0.9)
+        VStack {
+            Rectangle()
+                .fill(color)
+                .frame(width: 30, height: CGFloat(value) * 16)
+                .gesture(
+                    DragGesture()
+                        .onEnded { valueDrag in
+                            let delta = Int(-valueDrag.translation.height / 20)
+                            let newVal = value + delta
+                            onChange(newVal)
+                        }
+                )
+                .onTapGesture {
+                    onChange(value + 1)
+                }
+            Text(String(day.prefix(3)))
+                .font(.caption2)
+        }
     }
 }
 
@@ -265,4 +306,3 @@ struct FirstTimeSetupView_Previews: PreviewProvider {
             .environmentObject(AuthViewModel())
     }
 }
-
