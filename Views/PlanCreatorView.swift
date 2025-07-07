@@ -55,6 +55,13 @@ struct PlanCreatorView: View {
         Calendar.current.date(bySettingHour: minutes / 60, minute: minutes % 60, second: 0, of: Date()) ?? Date()
     }
 
+    private var computedReadingDays: [String] {
+        if existingPlan == nil {
+            return Array(readingDays)
+        }
+        return allDays.filter { (customPerDay[$0] ?? chaptersPerDay) > 0 }
+    }
+
     var estimatedCompletion: Date {
         let plan = ReadingPlan(
             name: name,
@@ -62,7 +69,7 @@ struct PlanCreatorView: View {
             finishBy: goalType == .finishByDate ? finishBy : nil,
             chaptersPerDay: nil,
             chaptersPerDayByDay: customPerDay,
-            readingDays: Array(readingDays),
+            readingDays: computedReadingDays,
             allowNonLinear: allowNonLinear,
             notificationsEnabled: notificationsEnabled,
             notificationTimeMinutes: notificationsEnabled ? PlanCreatorView.dateToMinutes(notificationTime) : nil,
@@ -80,9 +87,11 @@ struct PlanCreatorView: View {
                 TextField("Plan Name", text: $name)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
 
-                Picker("Plan Preset", selection: $preset) {
-                    ForEach(ReadingPlanPreset.allCases, id: \.self) { p in
-                        Text(String(describing: p).capitalized).tag(p)
+                if existingPlan == nil {
+                    Picker("Plan Preset", selection: $preset) {
+                        ForEach(ReadingPlanPreset.allCases, id: \.self) { p in
+                            Text(String(describing: p).capitalized).tag(p)
+                        }
                     }
                 }
 
@@ -123,25 +132,29 @@ struct PlanCreatorView: View {
                     .disabled(goalType != .finishByDate)
                 }
 
-                VStack(alignment: .leading) {
-                    Text("Reading Days")
-                        .font(.headline)
-                    HStack {
-                        ForEach(allDays, id: \.self) { day in
-                            Button(action: {
-                                if readingDays.contains(day) { readingDays.remove(day) } else { readingDays.insert(day) }
-                            }) {
-                                Text(day)
-                                    .padding(6)
-                                    .background(readingDays.contains(day) ? Color.blue : Color.gray.opacity(0.3))
-                                    .foregroundColor(.white)
-                                    .cornerRadius(6)
+                if existingPlan == nil {
+                    VStack(alignment: .leading) {
+                        Text("Reading Days")
+                            .font(.headline)
+                        HStack {
+                            ForEach(allDays, id: \.self) { day in
+                                Button(action: {
+                                    if readingDays.contains(day) { readingDays.remove(day) } else { readingDays.insert(day) }
+                                }) {
+                                    Text(day)
+                                        .padding(6)
+                                        .background(readingDays.contains(day) ? Color.blue : Color.gray.opacity(0.3))
+                                        .foregroundColor(.white)
+                                        .cornerRadius(6)
+                                }
                             }
                         }
                     }
                 }
 
-                DatePicker("Start Date", selection: $startDate, displayedComponents: .date)
+                if existingPlan == nil {
+                    DatePicker("Start Date", selection: $startDate, displayedComponents: .date)
+                }
                 Toggle("Enable Notifications", isOn: $notificationsEnabled)
                 if notificationsEnabled {
                     DatePicker("Notification Time", selection: $notificationTime, displayedComponents: .hourAndMinute)
@@ -179,7 +192,7 @@ struct PlanCreatorView: View {
                         finishBy: goalType == .finishByDate ? finishBy : nil,
                         chaptersPerDay: nil,
                         chaptersPerDayByDay: customPerDay,
-                        readingDays: Array(readingDays),
+                        readingDays: computedReadingDays,
                         allowNonLinear: allowNonLinear,
                         notificationsEnabled: notificationsEnabled,
                         notificationTimeMinutes: notificationsEnabled ? PlanCreatorView.dateToMinutes(notificationTime) : nil,
