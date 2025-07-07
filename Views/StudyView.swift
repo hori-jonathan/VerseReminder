@@ -5,7 +5,6 @@ struct StudyView: View {
     @EnvironmentObject var booksNav: BooksNavigationManager
     @EnvironmentObject var tabManager: TabSelectionManager
     @State private var bookmarkedVerses: [Verse] = []
-    @State private var animateTutorial = false
 
     private var allBooks: [BibleBook] {
         (oldTestamentCategories + newTestamentCategories).flatMap { $0.books }
@@ -22,30 +21,17 @@ struct StudyView: View {
                                 .font(.headline)
                                 .multilineTextAlignment(.center)
                                 .frame(maxWidth: .infinity)
-                            HStack(spacing: 40) {
-                                VStack(spacing: 8) {
-                                    Image(systemName: "bookmark.fill")
-                                        .font(.largeTitle)
-                                        .scaleEffect(animateTutorial ? 1.2 : 1.0)
-                                        .animation(.easeInOut(duration: 1).repeatForever(autoreverses: true), value: animateTutorial)
-                                    Text("Tap the bookmark icon while reading to save verses.")
-                                        .font(.footnote)
-                                        .multilineTextAlignment(.center)
-                                }
-                                VStack(spacing: 8) {
-                                    Image(systemName: "square.and.pencil")
-                                        .font(.largeTitle)
-                                        .scaleEffect(animateTutorial ? 1.2 : 1.0)
-                                        .animation(.easeInOut(duration: 1).repeatForever(autoreverses: true), value: animateTutorial)
-                                    Text("Tap a verse to add a note.")
-                                        .font(.footnote)
-                                        .multilineTextAlignment(.center)
-                                }
+                            VStack(spacing: 8) {
+                                Text("Tap the bookmark icon while reading to save verses.")
+                                    .font(.footnote)
+                                    .multilineTextAlignment(.center)
+                                Text("Tap and hold a verse or click the edit icon in a chapter's header to add a note.")
+                                    .font(.footnote)
+                                    .multilineTextAlignment(.center)
                             }
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 40)
-                        .onAppear { animateTutorial = true }
                     }
                 }
 
