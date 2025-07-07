@@ -25,4 +25,12 @@ extension String {
         let distance = self.levenshteinDistance(to: target)
         return 1 - Double(distance) / Double(max(self.count, target.count))
     }
+
+    /// Removes a leading paragraph symbol if present.
+    func trimmingLeadingParagraphSymbol() -> String {
+        if self.hasPrefix("\u{00B6}") {
+            return String(self.dropFirst()).trimmingCharacters(in: .whitespaces)
+        }
+        return self
+    }
 }
