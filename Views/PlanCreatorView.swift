@@ -15,7 +15,6 @@ struct PlanCreatorView: View {
     @State private var goalType: ReadingPlanGoalType = .chaptersPerDay
     @State private var chaptersPerDay: Int = 1
     @State private var customPerDay: [String: Int] = [:]
-    @State private var useCustomPerDay: Bool = false
     @State private var finishBy: Date = Calendar.current.date(byAdding: .month, value: 3, to: Date()) ?? Date()
     @State private var startDate: Date = Date()
     @State private var notificationsEnabled: Bool = false
@@ -31,8 +30,8 @@ struct PlanCreatorView: View {
         _name = State(initialValue: existingPlan?.name ?? "My Plan")
         _goalType = State(initialValue: existingPlan?.goalType ?? .chaptersPerDay)
         _chaptersPerDay = State(initialValue: existingPlan?.chaptersPerDay ?? 1)
-        _useCustomPerDay = State(initialValue: existingPlan?.chaptersPerDayByDay != nil)
-        _customPerDay = State(initialValue: existingPlan?.chaptersPerDayByDay ?? [:])
+        let defaults = Dictionary(uniqueKeysWithValues: ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map { ($0, existingPlan?.chaptersPerDay ?? 1) })
+        _customPerDay = State(initialValue: existingPlan?.chaptersPerDayByDay ?? defaults)
         _finishBy = State(initialValue: existingPlan?.finishBy ?? Calendar.current.date(byAdding: .month, value: 3, to: Date()) ?? Date())
         _startDate = State(initialValue: existingPlan?.startDate ?? Date())
         _notificationsEnabled = State(initialValue: existingPlan?.notificationsEnabled ?? false)
@@ -61,8 +60,8 @@ struct PlanCreatorView: View {
             name: name,
             startDate: startDate,
             finishBy: goalType == .finishByDate ? finishBy : nil,
-            chaptersPerDay: chaptersPerDay,
-            chaptersPerDayByDay: useCustomPerDay ? customPerDay : nil,
+            chaptersPerDay: nil,
+            chaptersPerDayByDay: customPerDay,
             readingDays: Array(readingDays),
             allowNonLinear: allowNonLinear,
             notificationsEnabled: notificationsEnabled,
@@ -108,18 +107,17 @@ struct PlanCreatorView: View {
                         Slider(value: Binding(get: { Double(min(chaptersPerDay, 20)) }, set: { chaptersPerDay = Int($0) }), in: 1...20, step: 1)
                     }
                     .disabled(goalType != .chaptersPerDay)
-                    Toggle("Customize per-day amounts", isOn: $useCustomPerDay)
-                    if useCustomPerDay {
-                        ForEach(allDays, id: \.self) { day in
-                            HStack {
-                                Text(day)
-                                Stepper("", value: Binding(get: { customPerDay[day] ?? chaptersPerDay }, set: { customPerDay[day] = min(max($0, 0), 100) }), in: 0...100)
-                                    .labelsHidden()
-                                Slider(value: Binding(get: { Double(min(customPerDay[day] ?? chaptersPerDay, 20)) }, set: { customPerDay[day] = Int($0) }), in: 0...20, step: 1)
-                                Text("\(customPerDay[day] ?? chaptersPerDay)")
-                            }
+                    ForEach(allDays, id: \.self) { day in
+                        HStack {
+                            Text(day)
+                            Stepper("", value: Binding(get: { customPerDay[day] ?? chaptersPerDay }, set: { customPerDay[day] = min(max($0, 0), 100) }), in: 0...100)
+                                .labelsHidden()
+                            Slider(value: Binding(get: { Double(min(customPerDay[day] ?? chaptersPerDay, 20)) }, set: { customPerDay[day] = Int($0) }), in: 0...20, step: 1)
+                            Text("\(customPerDay[day] ?? chaptersPerDay)")
                         }
                     }
+                    DayPillarsView(values: $customPerDay, defaultValue: chaptersPerDay)
+                        .frame(maxWidth: .infinity)
                 }
 
                 if existingPlan == nil {
@@ -183,8 +181,8 @@ struct PlanCreatorView: View {
                         name: name,
                         startDate: startDate,
                         finishBy: goalType == .finishByDate ? finishBy : nil,
-                        chaptersPerDay: chaptersPerDay,
-                        chaptersPerDayByDay: useCustomPerDay ? customPerDay : nil,
+                        chaptersPerDay: nil,
+                        chaptersPerDayByDay: customPerDay,
                         readingDays: Array(readingDays),
                         allowNonLinear: allowNonLinear,
                         notificationsEnabled: notificationsEnabled,
