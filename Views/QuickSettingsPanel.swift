@@ -47,7 +47,7 @@ struct QuickSettingsPanel: View {
             Picker("Bible Version", selection: Binding(
                 get: { authViewModel.profile.bibleId },
                 set: { authViewModel.updateBibleId($0) })) {
-                ForEach(bibleOptions, id: .id) { opt in
+                ForEach(bibleOptions, id: \.id) { opt in
                     Text(opt.name).tag(opt.id)
                 }
             }
