@@ -251,5 +251,13 @@ class AuthViewModel: ObservableObject {
         UserDefaults.standard.set(false, forKey: "setupComplete")
     }
 
+    /// Permanently remove stored user data from Firestore and reset locally.
+    func deleteAccount() {
+        guard let uid = user?.uid else { return }
+        dataStore.deleteProfile(uid: uid) { _ in }
+        profile = UserProfile()
+        UserDefaults.standard.set(false, forKey: "setupComplete")
+    }
+
 }
 

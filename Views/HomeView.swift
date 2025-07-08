@@ -8,6 +8,9 @@ struct HomeView: View {
     @State private var showPlanCreator = false
     @State private var editingPlan: ReadingPlan? = nil
     @State private var showReset = false
+    @State private var showAdvanced = false
+    @State private var showContact = false
+    @State private var showPrivacy = false
 
     var body: some View {
         NavigationView {
@@ -114,6 +117,19 @@ struct HomeView: View {
                 .padding()
             }
             .navigationTitle("Home")
+            .toolbar {
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
+                    Button { showPrivacy = true } label: {
+                        Image(systemName: "lock.shield")
+                    }
+                    Button { showContact = true } label: {
+                        Image(systemName: "envelope")
+                    }
+                    Button { showAdvanced = true } label: {
+                        Image(systemName: "gearshape")
+                    }
+                }
+            }
             .sheet(isPresented: $showPlanCreator) {
                 NavigationView { PlanCreatorView() }
             }
@@ -123,6 +139,16 @@ struct HomeView: View {
             .sheet(isPresented: $showReset) {
                 ResetAccountView()
                     .environmentObject(authViewModel)
+            }
+            .sheet(isPresented: $showAdvanced) {
+                NavigationView { AdvancedSettingsView() }
+                    .environmentObject(authViewModel)
+            }
+            .sheet(isPresented: $showContact) {
+                NavigationView { ContactView() }
+            }
+            .sheet(isPresented: $showPrivacy) {
+                NavigationView { PrivacyPolicyView() }
             }
         }
     }
