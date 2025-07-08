@@ -796,7 +796,7 @@ struct BookDropdownCell: View {
                     .padding(.bottom, 14)
                     .background(
                         RoundedRectangle(cornerRadius: 20)
-                            .fill(Color(.systemBackground))
+                            .fill(Color(.secondarySystemBackground))
                             .shadow(color: Color.black.opacity(0.08), radius: 6, y: 2)
                     )
                     .opacity(showContent ? 1 : 0)
