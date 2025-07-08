@@ -57,11 +57,14 @@ struct HomeView: View {
                             VStack(spacing: 12) {
                                 Text("Today's Progress")
                                     .font(.headline)
+                                    .padding(.bottom, read >= goal ? 4 : 0)
                                 DailyProgressCircle(progress: Double(read) / Double(goal))
                                 if read >= goal {
                                     Text("Today's goal completed!")
                                         .font(.subheadline)
-                                        .foregroundColor(.purple)
+                                        .bold()
+                                        .foregroundColor(.gray)
+                                        .padding(.top, 4)
                                 } else {
                                     Text("You've read \(read) of \(goal) chapters today")
                                         .font(.subheadline)
