@@ -84,4 +84,22 @@ struct NotificationManager {
             }
         }
     }
+
+    /// Schedule a quick notification used for manual testing.
+    func scheduleTestNotification() {
+        requestAuthorizationIfNeeded()
+        let content = UNMutableNotificationContent()
+        content.title = "Test Notification"
+        content.body = "This is a test of the notification system."
+        content.sound = .default
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
+        let id = "test-\(UUID().uuidString)"
+        let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("Failed to schedule test notification: \(error)")
+            }
+        }
+    }
 }
