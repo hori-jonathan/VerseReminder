@@ -430,10 +430,6 @@ struct CompleteChapterToggle: View {
                                 dragOffset = 0
                             }
                     )
-                    .overlay(
-                        Image(systemName: "chevron.right")
-                            .foregroundColor(.white)
-                    )
             }
             .frame(height: height)
         }

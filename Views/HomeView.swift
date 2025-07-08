@@ -105,14 +105,6 @@ struct HomeView: View {
                     }
                     HomeSettingsView(showAdvanced: $showAdvanced, showContact: $showContact, showPrivacy: $showPrivacy)
                     DonateSectionView()
-                    Button(role: .destructive) {
-                        showReset = true
-                    } label: {
-                        Text("Reset Account")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
-                    Spacer()
                 }
                 .padding()
             }
