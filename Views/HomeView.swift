@@ -103,7 +103,7 @@ struct HomeView: View {
                                 .cornerRadius(12)
                         }
                     }
-                    HomeSettingsView()
+                    HomeSettingsView(showAdvanced: $showAdvanced, showContact: $showContact, showPrivacy: $showPrivacy)
                     DonateSectionView()
                     Button(role: .destructive) {
                         showReset = true
@@ -117,19 +117,6 @@ struct HomeView: View {
                 .padding()
             }
             .navigationTitle("Home")
-            .toolbar {
-                ToolbarItemGroup(placement: .navigationBarTrailing) {
-                    Button { showPrivacy = true } label: {
-                        Image(systemName: "lock.shield")
-                    }
-                    Button { showContact = true } label: {
-                        Image(systemName: "envelope")
-                    }
-                    Button { showAdvanced = true } label: {
-                        Image(systemName: "gearshape")
-                    }
-                }
-            }
             .sheet(isPresented: $showPlanCreator) {
                 NavigationView { PlanCreatorView() }
             }
