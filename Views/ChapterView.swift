@@ -397,18 +397,18 @@ struct CompleteChapterToggle: View {
         GeometryReader { geo in
             ZStack {
                 Capsule()
-                    .stroke(Color.black, lineWidth: 1)
+                    .stroke(Color.primary, lineWidth: 1)
                     .background(
                         Capsule()
-                            .fill(isCompleted ? Color.black : Color.clear)
+                            .fill(isCompleted ? Color.accentColor : Color.clear)
                     )
 
                 Text(isCompleted ? "Completed" : "Complete Chapter")
-                    .foregroundColor(isCompleted ? .white : .black)
+                    .foregroundColor(isCompleted ? .white : .primary)
                     .frame(maxWidth: .infinity)
 
                 Circle()
-                    .fill(Color.black)
+                    .fill(Color.accentColor)
                     .frame(width: height - 8, height: height - 8)
                     .offset(x: dragOffset - (geo.size.width / 2 - height / 2))
                     .gesture(
@@ -431,7 +431,7 @@ struct CompleteChapterToggle: View {
                             }
                     )
                     .overlay(
-                        Image(systemName: isCompleted ? "checkmark" : "chevron.right")
+                        Image(systemName: "chevron.right")
                             .foregroundColor(.white)
                     )
             }
