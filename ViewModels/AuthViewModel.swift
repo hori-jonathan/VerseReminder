@@ -116,6 +116,7 @@ class AuthViewModel: ObservableObject {
         dataStore.loadProfile(uid: uid) { profile, _ in
             DispatchQueue.main.async { [weak self] in
                 self?.profile = profile ?? UserProfile()
+                if let strong = self { NotificationManager.shared.updateSchedule(for: strong.profile) }
             }
         }
     }
@@ -123,6 +124,7 @@ class AuthViewModel: ObservableObject {
     func saveProfile() {
         guard let uid = user?.uid else { return }
         dataStore.saveProfile(profile, uid: uid, completion: nil)
+        NotificationManager.shared.updateSchedule(for: profile)
     }
 
     func markChapterRead(bookId: String, chapter: Int, verse: Int) {
