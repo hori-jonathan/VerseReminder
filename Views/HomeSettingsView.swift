@@ -2,6 +2,9 @@ import SwiftUI
 
 struct HomeSettingsView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
+    @Binding var showAdvanced: Bool
+    @Binding var showContact: Bool
+    @Binding var showPrivacy: Bool
     @State private var selectedTheme: AppTheme = .light
     @State private var themeCheckTask: DispatchWorkItem?
 
@@ -38,6 +41,42 @@ struct HomeSettingsView: View {
                     .buttonStyle(.plain)
                 }
             }
+
+            HStack(spacing: 40) {
+                Button { showPrivacy = true } label: {
+                    VStack {
+                        Image(systemName: "lock.shield")
+                            .font(.title2)
+                        Text("Privacy Policy")
+                            .font(.footnote)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.plain)
+
+                Button { showContact = true } label: {
+                    VStack {
+                        Image(systemName: "envelope")
+                            .font(.title2)
+                        Text("Contact Us")
+                            .font(.footnote)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.plain)
+
+                Button { showAdvanced = true } label: {
+                    VStack {
+                        Image(systemName: "gearshape")
+                            .font(.title2)
+                        Text("Settings")
+                            .font(.footnote)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.top, 8)
         }
         .onAppear {
             themeCheckTask?.cancel()
