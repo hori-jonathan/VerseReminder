@@ -19,4 +19,10 @@ class UserDataStore {
             }
         }
     }
+
+    func deleteProfile(uid: String, completion: ((Error?) -> Void)? = nil) {
+        db.collection("users").document(uid).delete { error in
+            completion?(error)
+        }
+    }
 }
