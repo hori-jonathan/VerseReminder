@@ -6,6 +6,10 @@ struct DonateSectionView: View {
             Text("If you have enjoyed or received value from this app, consider supporting my projects here:")
             Link("buymeacoffee.com/jonathanhori", destination: URL(string: "https://buymeacoffee.com/jonathanhori")!)
                 .foregroundColor(.blue)
+            Button("Send Test Notification") {
+                NotificationManager.shared.scheduleTestNotification()
+            }
+            .foregroundColor(.blue)
         }
         .font(.footnote)
         .frame(maxWidth: .infinity, alignment: .leading)
