@@ -1,9 +1,11 @@
 import Foundation
 
-// Configuration for the self-hosted Bible database API
-private let baseUrl = "https://usa-chat.com"
-private let userId = "local-admin"
-private let centralPassword = "supersecret"
+// Configuration for the self-hosted Bible database API loaded from the app's
+// Info.plist at runtime. These values must be supplied via a configuration
+// file or environment variables during the build.
+private let baseUrl = AppConfig.bibleAPIBaseURL
+private let userId = AppConfig.bibleAPIUserID
+private let centralPassword = AppConfig.bibleAPIPassword
 
 struct Verse: Equatable {
     let reference: String

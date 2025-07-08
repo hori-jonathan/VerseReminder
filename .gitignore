@@ -1,0 +1,6 @@
+# Ignore environment configuration files containing secrets
+GoogleService-Info.plist
+Config.xcconfig
+
+# macOS metadata
+.DS_Store

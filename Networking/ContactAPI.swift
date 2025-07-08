@@ -9,9 +9,12 @@ class ContactAPI {
     static let shared = ContactAPI()
     private init() {}
 
-    private let baseUrl = "https://usa-chat.com"
-    private let userId = "local-admin"
-    private let password = "supersecret"
+    // Backend configuration values loaded from the app's Info.plist. Real
+    // credentials should be supplied at build time and are not stored in the
+    // repository.
+    private let baseUrl = AppConfig.bibleAPIBaseURL
+    private let userId = AppConfig.bibleAPIUserID
+    private let password = AppConfig.bibleAPIPassword
 
     private func request(path: String, method: String = "POST", body: [String: Any]? = nil, completion: @escaping (Result<Data, ContactAPIError>) -> Void) {
         guard let url = URL(string: baseUrl + path) else {

@@ -29,3 +29,9 @@ attempt again.
 - Each plan stores a progress tree so completion can be computed from your reading history
 - Edit your reading plan anytime from the Home tab
 - Contact Us form to reach the developer
+
+## Configuration
+
+Sensitive credentials are not included in this repository. Copy `GoogleService-Info.sample.plist` to `GoogleService-Info.plist` and `Config.sample.xcconfig` to `Config.xcconfig`, then fill in your real Firebase and backend values. These files are ignored by Git so your secrets remain local.
+
+At build time the values from `Config.xcconfig` are injected into the app's `Info.plist`. If any of the required keys are missing the app will terminate on launch with a clear error message.
