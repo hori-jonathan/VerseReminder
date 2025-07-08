@@ -28,3 +28,4 @@ attempt again.
 - Reading plans are non-linear by default and can be built from presets such as the full Bible, Old or New Testament, Gospels, Prophets, and more
 - Each plan stores a progress tree so completion can be computed from your reading history
 - Edit your reading plan anytime from the Home tab
+- Contact Us form to reach the developer
