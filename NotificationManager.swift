@@ -38,17 +38,14 @@ struct NotificationManager {
         requestAuthorizationIfNeeded()
 
         let books = (oldTestamentCategories + newTestamentCategories).flatMap { $0.books }
-        let bookLookup = Dictionary(uniqueKeysWithValues: books.map { ($0.id, $0.name) })
-        let lastBookId = profile.lastReadBookId
-        let lastPos = lastBookId.flatMap { profile.lastRead[$0] }
-        let lastReference: String
-        if let bid = lastBookId,
-           let chapter = lastPos?["chapter"],
-           let verse = lastPos?["verse"],
-           let name = bookLookup[bid] {
-            lastReference = "\(name) \(chapter):\(verse)"
-        } else {
-            lastReference = "your plan"
+        let ordered = books.sorted { $0.order < $1.order }
+        var nextReference = "your plan"
+        for book in ordered {
+            let read = Set(profile.chaptersRead[book.id] ?? [])
+            if let chapter = (1...book.chapters).first(where: { !read.contains($0) }) {
+                nextReference = "\(book.name) \(chapter)"
+                break
+            }
         }
 
         for offset in 0..<7 {
@@ -67,7 +64,7 @@ struct NotificationManager {
             let template = messages.randomElement() ?? messages[0]
             let body = template
                 .replacingOccurrences(of: "{n}", with: "\(remaining)")
-                .replacingOccurrences(of: "{x}", with: lastReference)
+                .replacingOccurrences(of: "{x}", with: nextReference)
 
             let content = UNMutableNotificationContent()
             content.title = "Reading Reminder"
