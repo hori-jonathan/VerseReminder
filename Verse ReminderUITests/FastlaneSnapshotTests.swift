@@ -1,5 +1,6 @@
 import XCTest
 
+@MainActor
 final class FastlaneSnapshotTests: XCTestCase {
     private var app: XCUIApplication!
 
