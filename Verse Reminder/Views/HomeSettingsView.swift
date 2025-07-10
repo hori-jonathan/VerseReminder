@@ -5,7 +5,7 @@ struct HomeSettingsView: View {
     @Binding var showAdvanced: Bool
     @Binding var showContact: Bool
     @Binding var showPrivacy: Bool
-    @State private var selectedTheme: AppTheme = .light
+    @State private var selectedTheme: AppTheme = .dark
     @State private var themeCheckTask: DispatchWorkItem?
 
     var body: some View {

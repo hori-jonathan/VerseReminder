@@ -33,8 +33,8 @@ struct UserProfile {
          bibleId: String = defaultBibleId,
          fontSize: FontSizeOption = FontSizeOption(),
          fontChoice: FontChoice = .system,
-         verseSpacing: VerseSpacingOption = VerseSpacingOption(),
-         theme: AppTheme = .light) {
+        verseSpacing: VerseSpacingOption = VerseSpacingOption(),
+        theme: AppTheme = .dark) {
         self.chaptersRead = chaptersRead
         self.chaptersBookmarked = chaptersBookmarked
         self.lastRead = lastRead
@@ -72,7 +72,7 @@ extension UserProfile {
         let fontChoice = FontChoice(rawValue: dict["fontChoice"] as? String ?? FontChoice.system.rawValue) ?? .system
         let verseSpacingVal = dict["verseSpacing"] as? Double ?? 8
         let verseSpacing = VerseSpacingOption(value: verseSpacingVal)
-        let theme = AppTheme(rawValue: dict["theme"] as? String ?? AppTheme.light.rawValue) ?? .light
+        let theme = AppTheme(rawValue: dict["theme"] as? String ?? AppTheme.dark.rawValue) ?? .dark
         self.init(chaptersRead: chaptersRead, chaptersBookmarked: chaptersBookmarked, lastRead: lastRead, readingPlan: plan, bookmarks: bookmarks, lastReadBookId: lastBook, dailyChapterCounts: dailyCounts, chapterNotes: chapterNotes, verseNotes: verseNotes, bibleId: bibleId, fontSize: fontSize, fontChoice: fontChoice, verseSpacing: verseSpacing, theme: theme)
     }
 

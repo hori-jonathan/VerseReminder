@@ -18,4 +18,6 @@ devices([
 
 languages(["en-US"])
 
+user_interface_style("dark")
+
 clear_previous_screenshots(true)

@@ -16,7 +16,7 @@ struct FirstTimeSetupView: View {
     private let allDays = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
 
     @State private var selectedBible: String = defaultBibleId
-    @State private var selectedTheme: AppTheme = .light
+    @State private var selectedTheme: AppTheme = .dark
     @State private var chaptersPerDay: Int = 1
     @State private var customPerDay: [String: Int] = [:]
     @State private var notificationsEnabled: Bool = false
