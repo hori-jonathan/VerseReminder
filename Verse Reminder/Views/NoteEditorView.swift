@@ -24,6 +24,7 @@ struct NoteEditorView: View {
                     }
                 }
         }
+        .navigationViewStyle(.stack)
     }
 }
 

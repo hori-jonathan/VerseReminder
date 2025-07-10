@@ -37,6 +37,7 @@ struct BookmarksView: View {
             }
             .onAppear(perform: loadVerses)
         }
+        .navigationViewStyle(.stack)
     }
 
     private func referencePrefix(for id: String) -> String {

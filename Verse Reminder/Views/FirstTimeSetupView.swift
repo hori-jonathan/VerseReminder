@@ -171,6 +171,7 @@ struct FirstTimeSetupView: View {
                 showWelcome = true
             }
         }
+        .navigationViewStyle(.stack)
     }
 
     private func save() {
