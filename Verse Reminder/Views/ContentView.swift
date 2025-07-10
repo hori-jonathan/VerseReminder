@@ -21,6 +21,7 @@ struct ContentView: View {
                 .tag(AppTab.home)
 
             NavigationView { booksStack }
+                .navigationViewStyle(.stack)
                 .opacity(tabManager.selection == .books ? 1 : 0)
                 .animation(.easeInOut(duration: 0.3), value: tabManager.selection)
                 .tabItem {
