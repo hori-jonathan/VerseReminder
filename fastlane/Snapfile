@@ -1,0 +1,12 @@
+# Sample Snapfile for capturing screenshots
+scheme "Verse Reminder"
+
+# Devices to run snapshot on
+devices([
+  "iPhone 14",
+  "iPad Pro (12.9-inch) (6th generation)"
+])
+
+languages(["en-US"])
+
+clear_previous_screenshots(true)

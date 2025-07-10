@@ -14,6 +14,12 @@ struct Verse_ReminderApp: App {
 
     init() {
         FirebaseApp.configure()
+
+        if CommandLine.arguments.contains("--fastlane-snapshot") ||
+            ProcessInfo.processInfo.environment["FASTLANE_SNAPSHOT"] == "YES" {
+            UserDefaults.standard.set(true, forKey: "setupComplete")
+        }
+
         _authViewModel = StateObject(wrappedValue: AuthViewModel())
     }
 
