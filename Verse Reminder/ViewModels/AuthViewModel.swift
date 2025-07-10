@@ -70,7 +70,10 @@ class AuthViewModel: ObservableObject {
     }
 
     func linkWithGoogle(completion: @escaping (Error?) -> Void) {
-        guard let topVC = UIApplication.shared.windows.first?.rootViewController else {
+        let scenes = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+        let rootVC = scenes.first?.windows.first?.rootViewController
+        guard let topVC = rootVC else {
             completion(NSError(domain: "UI", code: -1, userInfo: [NSLocalizedDescriptionKey: "No Root VC"]))
             return
         }
