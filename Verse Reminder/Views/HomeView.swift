@@ -92,16 +92,6 @@ struct HomeView: View {
                             .frame(maxWidth: .infinity)
                         }
                     }
-                    } else {
-                        VStack(spacing: 16) {
-                            Text("No reading plan yet")
-                                .font(.title2)
-                            Button("Create Plan") { showPlanCreator = true }
-                                .padding()
-                                .background(Color.blue)
-                                .foregroundColor(.white)
-                                .cornerRadius(12)
-                        }
                     }
                     HomeSettingsView(showAdvanced: $showAdvanced, showContact: $showContact, showPrivacy: $showPrivacy)
                     DonateSectionView()

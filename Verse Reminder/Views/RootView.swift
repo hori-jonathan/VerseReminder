@@ -10,7 +10,7 @@ struct RootView: View {
             if authViewModel.isLoading {
                 ProgressView()
             } else if authViewModel.user != nil {
-                if setupComplete {
+                if setupComplete && authViewModel.profile.readingPlan != nil {
                     ContentView()
                 } else {
                     FirstTimeSetupView()
