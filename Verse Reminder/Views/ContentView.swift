@@ -52,10 +52,10 @@ struct ContentView: View {
     // MARK: - iPad Layout
     private var iPadBody: some View {
         NavigationSplitView {
-            List(selection: $tabManager.selection) {
-                Label("Home", systemImage: "house").tag(AppTab.home)
-                Label("Books", systemImage: "book.closed").tag(AppTab.books)
-                Label("Study", systemImage: "books.vertical").tag(AppTab.study)
+            List {
+                sidebarRow(tab: .home)
+                sidebarRow(tab: .books)
+                sidebarRow(tab: .study)
             }
             .navigationTitle("VerseReminder")
             .listStyle(.sidebar)
@@ -71,6 +71,21 @@ struct ContentView: View {
         }
         .environmentObject(booksNavigationManager)
         .environmentObject(tabManager)
+    }
+
+    // MARK: - Sidebar Row Helper
+    @ViewBuilder
+    private func sidebarRow(tab: AppTab) -> some View {
+        let selected = tabManager.selection == tab
+        Button(action: {
+            tabManager.selection = tab
+        }) {
+            Label(tab.title, systemImage: tab.icon)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .foregroundColor(selected ? .accentColor : .primary)
+                .background(selected ? Color.accentColor.opacity(0.12) : Color.clear)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Shared Books Navigation
@@ -107,6 +122,24 @@ struct ContentView: View {
                     )
                 }
             }
+        }
+    }
+}
+
+// Optional: Helper for sidebar titles/icons if needed
+extension AppTab {
+    var title: String {
+        switch self {
+        case .home: return "Home"
+        case .books: return "Books"
+        case .study: return "Study"
+        }
+    }
+    var icon: String {
+        switch self {
+        case .home: return "house"
+        case .books: return "book.closed"
+        case .study: return "books.vertical"
         }
     }
 }
