@@ -93,6 +93,7 @@ struct StudyView: View {
             .navigationTitle("Study")
             .onAppear(perform: loadBookmarks)
         }
+        .navigationViewStyle(.stack)
     }
 
     private func referencePrefix(for id: String) -> String {

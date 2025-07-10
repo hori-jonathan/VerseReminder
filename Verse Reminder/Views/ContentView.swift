@@ -4,18 +4,12 @@ struct ContentView: View {
     @StateObject private var booksNavigationManager = BooksNavigationManager()
     @StateObject private var tabManager = TabSelectionManager()
     @EnvironmentObject var authViewModel: AuthViewModel
-    @Environment(\.horizontalSizeClass) private var sizeClass
-
     var body: some View {
-        if sizeClass == .regular {
-            iPadBody
-        } else {
-            iPhoneBody
-        }
+        tabBody
     }
 
-    // MARK: - Phone Layout
-    private var iPhoneBody: some View {
+    // MARK: - Shared Layout
+    private var tabBody: some View {
         TabView(selection: $tabManager.selection) {
             HomeView()
                 .opacity(tabManager.selection == .home ? 1 : 0)
@@ -47,45 +41,6 @@ struct ContentView: View {
         }
         .environmentObject(booksNavigationManager)
         .environmentObject(tabManager)
-    }
-
-    // MARK: - iPad Layout
-    private var iPadBody: some View {
-        NavigationSplitView {
-            List {
-                sidebarRow(tab: .home)
-                sidebarRow(tab: .books)
-                sidebarRow(tab: .study)
-            }
-            .navigationTitle("VerseReminder")
-            .listStyle(.sidebar)
-        } detail: {
-            switch tabManager.selection {
-            case .home:
-                HomeView()
-            case .books:
-                booksStack
-            case .study:
-                StudyView()
-            }
-        }
-        .environmentObject(booksNavigationManager)
-        .environmentObject(tabManager)
-    }
-
-    // MARK: - Sidebar Row Helper
-    @ViewBuilder
-    private func sidebarRow(tab: AppTab) -> some View {
-        let selected = tabManager.selection == tab
-        Button(action: {
-            tabManager.selection = tab
-        }) {
-            Label(tab.title, systemImage: tab.icon)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .foregroundColor(selected ? .accentColor : .primary)
-                .background(selected ? Color.accentColor.opacity(0.12) : Color.clear)
-        }
-        .buttonStyle(.plain)
     }
 
     // MARK: - Shared Books Navigation

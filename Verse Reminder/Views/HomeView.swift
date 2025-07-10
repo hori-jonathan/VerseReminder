@@ -120,6 +120,7 @@ struct HomeView: View {
                 NavigationView { PrivacyPolicyView() }
             }
         }
+        .navigationViewStyle(.stack)
     }
 
     private func lastReadReference() -> (ref: String, verse: Int)? {
