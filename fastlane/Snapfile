@@ -8,3 +8,4 @@ devices([
 languages(["en-US"])
 
 clear_previous_screenshots(true)
+erase_simulator true

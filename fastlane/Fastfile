@@ -18,6 +18,7 @@ default_platform(:ios)
 platform :ios do
   desc "Take screenshots for the App Store"
   lane :screenshots do
+    sh("xcrun simctl shutdown all && xcrun simctl erase all")
     capture_screenshots
   end
 end
