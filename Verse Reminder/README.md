@@ -29,3 +29,12 @@ attempt again.
 - Each plan stores a progress tree so completion can be computed from your reading history
 - Edit your reading plan anytime from the Home tab
 - Contact Us form to reach the developer
+
+## Development Setup
+
+This project uses Fastlane for screenshots. To avoid errors when running Fastlane with Ruby 3.4, set the Ruby version to 3.2.3:
+
+```bash
+rbenv global 3.2.3
+bundle install
+```
