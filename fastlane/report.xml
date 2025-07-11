@@ -5,12 +5,17 @@
     
     
       
-      <testcase classname="fastlane.lanes" name="0: default_platform" time="0.000135">
+      <testcase classname="fastlane.lanes" name="0: default_platform" time="0.000215">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="1: capture_screenshots" time="375.993098">
+      <testcase classname="fastlane.lanes" name="1: xcrun simctl shutdown all &amp;&amp; xcrun simctl erase all" time="0.252456">
+        
+      </testcase>
+    
+      
+      <testcase classname="fastlane.lanes" name="2: capture_screenshots" time="442.612888">
         
       </testcase>
     

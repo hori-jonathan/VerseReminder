@@ -268,9 +268,8 @@ private extension XCUIElementAttributes {
 
         let oldStatusBarSize = CGSize(width: deviceWidth, height: 20)
         let newStatusBarSize = CGSize(width: deviceWidth, height: 44)
-        let m3iPadStatusBarSize = CGSize(width: deviceWidth, height: 54)
 
-        return [oldStatusBarSize, newStatusBarSize, m3iPadStatusBarSize].contains(frame.size)
+        return [oldStatusBarSize, newStatusBarSize].contains(frame.size)
     }
 }
 
@@ -311,4 +310,4 @@ private extension CGFloat {
 
 // Please don't remove the lines below
 // They are used to detect outdated configuration files
-// SnapshotHelperVersion [1.31]
+// SnapshotHelperVersion [1.30]
